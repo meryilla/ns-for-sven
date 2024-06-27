@@ -38,6 +38,15 @@ const string SND_HIT2 = "ns/weapons/kn/kn-hit-2.wav";
 const string SND_HIT_WALL = "ns/weapons/kn/kn-hit-wall.wav";
 const string SND_DRAW = "ns/weapons/kn/kn-deploy.wav";
 
+array<string> SOUNDS = {
+	SND_FIRE1,
+	SND_FIRE2,
+	SND_HIT1,
+	SND_HIT2,
+	SND_HIT_WALL,
+	SND_DRAW
+};
+
 array<string> pKnifeAttackSounds = {
 	"ns/weapons/kn/kn-1.wav",
 	"ns/weapons/kn/kn-2.wav"
@@ -89,17 +98,22 @@ class weapon_ns_knife : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase, NSBASE
 		g_Game.PrecacheModel( szModelV );
 		g_Game.PrecacheModel( szModelW );
 		
-		g_SoundSystem.PrecacheSound( SND_HIT_WALL );
-		g_SoundSystem.PrecacheSound( SND_DRAW );
+		for( uint i = 0; i < SOUNDS.length(); i++ )
+		{
+			g_SoundSystem.PrecacheSound( SOUNDS[i] );
+			g_Game.PrecacheGeneric( "sound/" + SOUNDS[i] );
+		}
 		
 		for( uint i = 0; i < pKnifeAttackSounds.length(); i++ )
 		{
 			g_SoundSystem.PrecacheSound( pKnifeAttackSounds[i] );
+			g_Game.PrecacheGeneric( "sound/" + pKnifeAttackSounds[i] );
 		}
 	
 		for( uint i = 0; i < pKnifeHitSounds.length(); i++ )
 		{
 			g_SoundSystem.PrecacheSound( pKnifeHitSounds[i] );
+			g_Game.PrecacheGeneric( "sound/" + pKnifeHitSounds[i] );
 		}
 		
 		CommonPrecache();

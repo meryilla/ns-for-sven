@@ -23,6 +23,7 @@ mixin class WeaponBase
 	void CommonPrecache()
 	{
 		g_SoundSystem.PrecacheSound( szSoundEmpty );
+		g_Game.PrecacheGeneric( "sound/" + szSoundEmpty );
 	}	
 	
 	bool Deploy( string vmodel, string pmodel, int iAnim, string pAnim, int iBodygroup, float deployTime ) // deploys the weapon

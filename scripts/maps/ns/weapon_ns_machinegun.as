@@ -36,9 +36,17 @@ const string szSoundDraw = "ns/weapons/mg/lmg_draw.wav";
 const string szSoundClipIn = "ns/weapons/mg/lmg_clipin.wav";
 const string szSoundClipOut = "ns/weapons/mg/lmg_clipout.wav";
 
+array<string> SOUNDS = {
+	szSoundPrimaryFire,
+	szSoundDraw,
+	szSoundClipIn,
+	szSoundClipOut
+};
+
 //Anim timings
 const float flDeployTime = 1.3f;
-const float flReloadTime = 4.05;
+//const float flReloadTime = 4.05;
+const float flReloadTime = 3.8;
 
 //Item info
 const int MAX_AMMO = 250;
@@ -50,8 +58,8 @@ const int iDefaultAmmo = MAX_CLIP;
 //Stats
 const int iDamage = 12;
 const int iRange = 4096;
-//const float flROF = 0.2;
-const float flROF = 0.1;
+//const float flROF = 0.1;
+const float flROF = 0.06;
 const float	flXPunch = 1.4;
 const int iBarrelLength = 10;
 const Vector vecSpread = VECTOR_CONE_4DEGREES;
@@ -75,7 +83,7 @@ class weapon_ns_machinegun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 	{
 		Precache();
 		self.m_iDefaultAmmo = iDefaultAmmo;
-		g_EntityFuncs.SetModel( self, szModelW );		
+		g_EntityFuncs.SetModel( self, szModelW );
 		self.FallInit();
 	}
 
@@ -86,10 +94,11 @@ class weapon_ns_machinegun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 		g_Game.PrecacheModel( szModelW );
 		m_iShell = g_Game.PrecacheModel( szShell );
 		
-		g_SoundSystem.PrecacheSound( szSoundPrimaryFire );
-		g_SoundSystem.PrecacheSound( szSoundDraw );
-		g_SoundSystem.PrecacheSound( szSoundClipIn );
-		g_SoundSystem.PrecacheSound( szSoundClipOut );
+		for( uint i = 0; i < SOUNDS.length(); i++ )
+		{
+			g_SoundSystem.PrecacheSound( SOUNDS[i] );
+			g_Game.PrecacheGeneric( "sound/" + SOUNDS[i] );
+		}
 		
 		CommonPrecache();
 	}
@@ -202,21 +211,21 @@ class weapon_ns_machinegun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 		ShellEject( m_pPlayer, m_iShell, Vector( 16, 5, -4 ) );
 		
 		self.m_flNextPrimaryAttack = self.m_flNextSecondaryAttack = g_Engine.time + flROF;
-		self.m_flTimeWeaponIdle = g_Engine.time + g_PlayerFuncs.SharedRandomLong( m_pPlayer.random_seed, 10, 15 );		
+		self.m_flTimeWeaponIdle = g_Engine.time + g_PlayerFuncs.SharedRandomLong( m_pPlayer.random_seed, 10, 15 );
 			
 
-	}	
+	}
 
 	void Reload()
 	{		
 		int iAmmo = m_pPlayer.m_rgAmmo( self.m_iPrimaryAmmoType );
 		if( self.m_iClip == MAX_CLIP || m_pPlayer.m_rgAmmo( self.m_iPrimaryAmmoType ) <= 0 )
-			return;			
+			return;
 			
 		Reload( MAX_CLIP, RELOAD, flReloadTime, GetBodygroup() );
 		
 		BaseClass.Reload();
-    }
+	}
 	
 	void WeaponIdle()
 	{
@@ -234,6 +243,6 @@ class weapon_ns_machinegun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 void Register()
 {
 	g_CustomEntityFuncs.RegisterCustomEntity( "NS_MACHINEGUN::weapon_ns_machinegun", "weapon_ns_machinegun" );
-	g_ItemRegistry.RegisterWeapon( "weapon_ns_machinegun", "ns", "9mm" );	
+	g_ItemRegistry.RegisterWeapon( "weapon_ns_machinegun", "ns", "9mm", "", "ammo_9mmAR" );
 }
 }

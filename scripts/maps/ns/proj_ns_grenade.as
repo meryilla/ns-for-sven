@@ -20,6 +20,12 @@ string BOUNCE_SOUND1     	= "ns/weapons/gr/grenade_hit1.wav";
 string BOUNCE_SOUND2     	= "ns/weapons/gr/grenade_hit2.wav";
 string BOUNCE_SOUND3     	= "ns/weapons/gr/grenade_hit3.wav";
 
+array<string> SOUNDS = {
+	BOUNCE_SOUND1,
+	BOUNCE_SOUND2,
+	BOUNCE_SOUND3
+};
+
 array<string> GrenExplodeSounds =
 {
 	"ns/weapons/explode3.wav",
@@ -65,7 +71,15 @@ class CNSGrenade : ScriptBaseMonsterEntity
 		g_SoundSystem.PrecacheSound( BOUNCE_SOUND3 );
 		
 		for( uint i = 0; i < GrenExplodeSounds.length(); i++ )
+		{
 			g_SoundSystem.PrecacheSound( GrenExplodeSounds[i] );
+			g_Game.PrecacheGeneric( "sound/" + GrenExplodeSounds[i] );
+		}
+		for( uint j = 0; j < SOUNDS.length(); j++ )
+		{
+			g_SoundSystem.PrecacheSound( SOUNDS[j] );
+			g_Game.PrecacheGeneric( "sound/" + SOUNDS[j] );
+		}			
 	}
 
 	void BounceTouch( CBaseEntity@ pOther )
@@ -383,7 +397,7 @@ CNSGrenade@ ShootTimed( entvars_t@ pevOwner, Vector vecStart, Vector vecVelocity
 	pGrenade.pev.framerate = 1.0;
 
 	// Tumble through the air
-    pGrenade.pev.avelocity.x = Math.RandomLong( -800, -300 );
+	pGrenade.pev.avelocity.x = Math.RandomLong( -800, -300 );
 
 	// Also explode on contact
 	//pGrenade.SetTouch( TouchFunction( ExplodeTouch ) );

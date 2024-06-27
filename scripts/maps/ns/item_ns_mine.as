@@ -22,6 +22,13 @@ const string SND_CHARGE = "ns/weapons/mine/mine_charge.wav";
 const string SND_ACTIVATE = "ns/weapons/mine/mine_activate.wav";
 const string SND_STEP = "ns/weapons/mine/mine_step.wav";
 
+array<string> SOUNDS = {
+	SND_DEPLOY,
+	SND_CHARGE,
+	SND_ACTIVATE,
+	SND_STEP,
+};
+
 array<string> MineExplodeSounds =
 {
 	"ns/weapons/explode3.wav",
@@ -88,23 +95,22 @@ class CNSMine : ScriptBaseMonsterEntity
 		g_Game.PrecacheModel( MODEL_W );
 		
 		//Sounds
-		g_SoundSystem.PrecacheSound( SND_DEPLOY );
-		g_SoundSystem.PrecacheSound( SND_CHARGE );
-		g_SoundSystem.PrecacheSound( SND_ACTIVATE );
-		g_SoundSystem.PrecacheSound( SND_STEP );
+		for( uint i = 0; i < SOUNDS.length(); i++ )
+		{
+			g_SoundSystem.PrecacheSound( SOUNDS[i] );
+			g_Game.PrecacheGeneric( "sound/" + SOUNDS[i] );
+		}
 		
-		for( uint i = 0; i < MineExplodeSounds.length(); i++ )
-			g_SoundSystem.PrecacheSound( MineExplodeSounds[i] );		
+		for( uint j = 0; j < MineExplodeSounds.length(); j++ )
+		{
+			g_SoundSystem.PrecacheSound( MineExplodeSounds[j] );
+			g_Game.PrecacheGeneric( "sound/" + MineExplodeSounds[j] );
+		}
 		
 		//Sprites
 		m_iSmokeSprite = g_Game.PrecacheModel( "sprites/steam1.spr" );
 		m_iExplodeSprite = g_Game.PrecacheModel( "sprites/zerogxplode.spr" );
 		m_iWaterExSprite = g_Game.PrecacheModel( "sprites/WXplo1.spr" );
-	}
-	
-	void SUB_Remove()
-	{
-			self.SUB_Remove();
 	}	
 	
 	void ActiveThink()
@@ -119,7 +125,7 @@ class CNSMine : ScriptBaseMonsterEntity
 		
 		if( ( pPlayer is null ) )
 			Detonate();
-	}		
+	}
 	
 	void PowerupThink()
 	{
@@ -181,7 +187,6 @@ class CNSMine : ScriptBaseMonsterEntity
 	
 	void Killed( entvars_t@ pevAttacker, int iGib )
 	{
-		g_Game.AlertMessage( at_console, "kaboom - triggered by mine death\n" );
 		Detonate();
 
 		BaseClass.Killed( pevAttacker, iGib );

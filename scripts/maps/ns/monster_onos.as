@@ -35,7 +35,19 @@ const string ONOS_SOUND_WOUND2 = "ns/monsters/onos/role7_pain1.wav";
 const string ONOS_SOUND_IDLE = "ns/monsters/onos/role7_idle1.wav";
 const string ONOS_SOUND_ALERT = "ns/monsters/onos/role7_spawn1.wav";
 
-
+array<string> SOUNDS = {
+	ONOS_SOUND_ATTACK1,
+	ONOS_SOUND_ATTACK2,
+	ONOS_SOUND_ATTACK3,
+	ONOS_SOUND_ATTACK4,
+	ONOS_SOUND_STOMP,
+	ONOS_SOUND_DEATH1,
+	ONOS_SOUND_DEATH2,
+	ONOS_SOUND_WOUND1,
+	ONOS_SOUND_WOUND2,
+	ONOS_SOUND_IDLE,
+	ONOS_SOUND_ALERT
+};
 
 //Stats
 const float BITE_DMG = 25;
@@ -114,21 +126,11 @@ class monster_onos : ScriptBaseMonsterEntity
 		g_Game.PrecacheModel( MODEL_STOMP );
 		g_Game.PrecacheModel( SPRITE_STOMP );
 		
-		g_SoundSystem.PrecacheSound( ONOS_SOUND_IDLE );
-		g_SoundSystem.PrecacheSound( ONOS_SOUND_ATTACK1 );
-		g_SoundSystem.PrecacheSound( ONOS_SOUND_ATTACK2 );
-		g_SoundSystem.PrecacheSound( ONOS_SOUND_ATTACK3 );
-		g_SoundSystem.PrecacheSound( ONOS_SOUND_ATTACK4 );	
-		g_SoundSystem.PrecacheSound( ONOS_SOUND_STOMP );
-		
-		g_SoundSystem.PrecacheSound( ONOS_SOUND_DEATH1 );
-		g_SoundSystem.PrecacheSound( ONOS_SOUND_DEATH2 );
-		
-		g_SoundSystem.PrecacheSound( ONOS_SOUND_WOUND1 );
-		g_SoundSystem.PrecacheSound( ONOS_SOUND_WOUND2 );
-		
-		g_SoundSystem.PrecacheSound( ONOS_SOUND_IDLE );
-		g_SoundSystem.PrecacheSound( ONOS_SOUND_ALERT );
+		for( uint i = 0; i < SOUNDS.length(); i++ )
+		{
+			g_SoundSystem.PrecacheSound( SOUNDS[i] );
+			g_Game.PrecacheGeneric( "sound/" + SOUNDS[i] );
+		}
 	}
 	
 	int Classify()
@@ -155,49 +157,51 @@ class monster_onos : ScriptBaseMonsterEntity
 		CBaseEntity@ pEntityStomp = g_EntityFuncs.CreateEntity( "onos_stomp" );
 		CStomp@ pStomp = cast<CStomp@>( CastToScriptClass( pEntityStomp ) );	
 		CBaseEntity@ pTarget = self.m_hEnemy.GetEntity();
-		
-		@pStomp.pev.owner = self.edict();		
 
-		pStomp.pev.origin = self.pev.origin;
+		if( pTarget !is null )
+		{
+			@pStomp.pev.owner = self.edict();
 
-		// Save starting point
-		pStomp.m_vecSpawn = self.pev.origin;
-		
-		Vector vecDir, vecAngles, vecTarget;
-		vecTarget = pTarget.pev.origin + ( ( pTarget.pev.velocity.Normalize() )*100 );
-		vecDir = vecTarget - self.pev.origin;
-		
-		g_EngineFuncs.VecToAngles( vecDir, vecAngles );
+			pStomp.pev.origin = self.pev.origin;
 
-		Math.MakeVectors( vecAngles );
-		
-		//Math.MakeVectors( self.pev.angles );
-		
-		// Zero out z velocity so it stays on the ground
-		Vector vecAim, vecNorm;
-		vecAim = g_Engine.v_forward;
-		vecAim.z = 0;
-		vecNorm = vecAim.Normalize();
+			// Save starting point
+			pStomp.m_vecSpawn = self.pev.origin;
+			
+			Vector vecDir, vecAngles, vecTarget;
+			vecTarget = pTarget.pev.origin + ( ( pTarget.pev.velocity.Normalize() )*100 );
+			vecDir = vecTarget - self.pev.origin;
+			
+			g_EngineFuncs.VecToAngles( vecDir, vecAngles );
 
-		//VectorScale( vecNorm, STOMP_SPEED, pStomp.pev.velocity );
-		pStomp.pev.velocity.x = vecNorm.x * STOMP_SPEED;
-		pStomp.pev.velocity.y = vecNorm.y * STOMP_SPEED;
-		//pStomp.pev.velocity.z = vecNorm.z * STOMP_SPEED;
-		//pStomp.pev.velocity.z = 0;
-		
-		//pStomp.pev.angles = self.pev.angles;
-		//vecAngles.z = 0;
-		pStomp.pev.angles = vecAngles;
+			Math.MakeVectors( vecAngles );
+			
+			//Math.MakeVectors( self.pev.angles );
+			
+			// Zero out z velocity so it stays on the ground
+			Vector vecAim, vecNorm;
+			vecAim = g_Engine.v_forward;
+			vecAim.z = 0;
+			vecNorm = vecAim.Normalize();
 
-		// Play view shake here
-		float theShakeAmplitude = 100;
-		float theShakeFrequency = 100;
-		float theShakeDuration = 1.0f;
-		float theShakeRadius = 700;
-		g_PlayerFuncs.ScreenShake( self.pev.origin, theShakeAmplitude, theShakeFrequency, theShakeDuration, theShakeRadius );
-		g_SoundSystem.EmitSoundDyn( self.edict(), CHAN_WEAPON, ONOS_SOUND_STOMP, 1.0, ATTN_NORM, 0, PITCH_NORM + Math.RandomLong( -10,10 ) );
-		GetSoundEntInstance().InsertSound( bits_SOUND_COMBAT, self.pev.origin,  900, 0.5, self );
-		
+			//VectorScale( vecNorm, STOMP_SPEED, pStomp.pev.velocity );
+			pStomp.pev.velocity.x = vecNorm.x * STOMP_SPEED;
+			pStomp.pev.velocity.y = vecNorm.y * STOMP_SPEED;
+			//pStomp.pev.velocity.z = vecNorm.z * STOMP_SPEED;
+			//pStomp.pev.velocity.z = 0;
+			
+			//pStomp.pev.angles = self.pev.angles;
+			//vecAngles.z = 0;
+			pStomp.pev.angles = vecAngles;
+			
+			// Play view shake here
+			float theShakeAmplitude = 100;
+			float theShakeFrequency = 100;
+			float theShakeDuration = 1.0f;
+			float theShakeRadius = 700;
+			g_PlayerFuncs.ScreenShake( self.pev.origin, theShakeAmplitude, theShakeFrequency, theShakeDuration, theShakeRadius );
+			g_SoundSystem.EmitSoundDyn( self.edict(), CHAN_WEAPON, ONOS_SOUND_STOMP, 1.0, ATTN_NORM, 0, PITCH_NORM + Math.RandomLong( -10,10 ) );
+			GetSoundEntInstance().InsertSound( bits_SOUND_COMBAT, self.pev.origin,  900, 0.5, self );
+		}
 		m_flNextStompAttack = g_Engine.time + 5.0f;
 	}
 	
@@ -309,7 +313,7 @@ class monster_onos : ScriptBaseMonsterEntity
 	}
 	
 	bool CheckMeleeAttack1( float flDot, float flDist )
-	{
+	{	
 		if( flDist <= 120 && flDot >= 0.7 && self.m_hEnemy.GetEntity() !is null && self.pev.FlagBitSet( FL_ONGROUND ) && self.m_flNextAttack < g_Engine.time )
 		{
 			return true;
@@ -337,19 +341,22 @@ class monster_onos : ScriptBaseMonsterEntity
 	
 	void MonsterThink()
 	{
-		BaseClass.Think();	
+		BaseClass.Think();
 		
 		if( @self.m_pSchedule is BaseClass.GetScheduleOfType( SCHED_CHASE_ENEMY ) && m_flNextStompAttack < g_Engine.time )
 		{
 			CBaseEntity@ pEnemy = cast<CBaseEntity@>( self.m_hEnemy.GetEntity() );
-			float distToEnemy = ( self.pev.origin - pEnemy.pev.origin).Length();
-			
-			if( pEnemy !is null && self.FVisible( pEnemy, false ) )
-			{	
-				if( distToEnemy >= 200 && distToEnemy <= 600 && self.pev.FlagBitSet( FL_ONGROUND ) )
-				{
-					self.ChangeSchedule( BaseClass.GetScheduleOfType( SCHED_RANGE_ATTACK1 ) );
-					
+
+			if( pEnemy !is null )
+			{
+				float distToEnemy = ( self.pev.origin - pEnemy.pev.origin).Length();
+				
+				if( self.FVisible( pEnemy, false ) )
+				{	
+					if( distToEnemy >= 200 && distToEnemy <= 600 && self.pev.FlagBitSet( FL_ONGROUND ) )
+					{
+						self.ChangeSchedule( BaseClass.GetScheduleOfType( SCHED_RANGE_ATTACK1 ) );
+					}
 				}
 			}
 		}
@@ -370,10 +377,9 @@ class monster_onos : ScriptBaseMonsterEntity
 
 		g_Utility.TraceHull( vecStart, vecEnd, dont_ignore_monsters, head_hull, pThis.edict(), tr );
 
-		if( tr.pHit !is null )
+		CBaseEntity@ pEntity = g_EntityFuncs.Instance( tr.pHit );
+		if( pEntity !is null )
 		{
-			CBaseEntity@ pEntity = g_EntityFuncs.Instance( tr.pHit );
-
 			if( iDamage > 0 )
 			{
 				pEntity.TakeDamage( pThis.pev, pThis.pev, iDamage, iDmgType );
@@ -477,12 +483,6 @@ class CStomp : ScriptBaseEntity
 
 		SetThink( ThinkFunction( KillYourself ) );
 		self.pev.nextthink = g_Engine.time + 1.2;
-		
-		//if( self.pev.owner !is null )
-		//{	
-		//	g_Game.AlertMessage(at_console,"assigned\n");
-		//	m_hOwner = EHandle( g_EntityFuncs.Instance( self.pev.owner ) );		
-		//}		
 	}
 	
 	void KillYourself()
@@ -500,9 +500,11 @@ class CStomp : ScriptBaseEntity
 		if( !m_hOwner )
 		{
 			if( self.pev.owner !is null )
-			{	
-				m_hOwner = EHandle( g_EntityFuncs.Instance( self.pev.owner ) );		
-			}			
+			{
+				m_hOwner = EHandle( g_EntityFuncs.Instance( self.pev.owner ) );
+			}
+			else
+				return;
 		}
 		
 		if( pOther is m_hOwner.GetEntity() )

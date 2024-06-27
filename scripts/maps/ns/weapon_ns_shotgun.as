@@ -47,6 +47,15 @@ const string szSoundPump = "ns/weapons/sg/shotgun_pump.wav";
 const string szSoundCock = "ns/weapons/sg/sg-cock.wav";
 const string szSoundStockRelease = "ns/weapons/sg/shotgun_stock_release.wav";
 
+array<string> SOUNDS = {
+	szSoundPrimaryFire,
+	szSoundReload,
+	szSoundDraw,
+	szSoundPump,
+	szSoundCock,
+	szSoundStockRelease
+};
+
 //Anim timings
 const float flDeployTime = 1.6f;
 const float flGotoReloadTime = 0.8f;
@@ -104,12 +113,11 @@ class weapon_ns_shotgun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 		g_Game.PrecacheModel( szModelW );
 		m_iShell = g_Game.PrecacheModel( szShell );
 		
-		g_SoundSystem.PrecacheSound( szSoundPrimaryFire );
-		g_SoundSystem.PrecacheSound( szSoundReload );
-		g_SoundSystem.PrecacheSound( szSoundDraw );
-		g_SoundSystem.PrecacheSound( szSoundPump );
-		g_SoundSystem.PrecacheSound( szSoundCock );
-		g_SoundSystem.PrecacheSound( szSoundStockRelease );
+		for( uint i = 0; i < SOUNDS.length(); i++ )
+		{
+			g_SoundSystem.PrecacheSound( SOUNDS[i] );
+			g_Game.PrecacheGeneric( "sound/" + SOUNDS[i] );
+		}
 		
 		CommonPrecache();
 	}
@@ -309,7 +317,7 @@ class weapon_ns_shotgun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 		}
 		m_pPlayer.m_rgAmmo( self.m_iPrimaryAmmoType, iAmmo );		
 		BaseClass.Reload();
-    }
+	}
 	
 	void WeaponIdle()
 	{
@@ -348,6 +356,6 @@ class weapon_ns_shotgun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 void Register()
 {
 	g_CustomEntityFuncs.RegisterCustomEntity( "NS_SHOTGUN::weapon_ns_shotgun", "weapon_ns_shotgun" );
-	g_ItemRegistry.RegisterWeapon( "weapon_ns_shotgun", "ns", "buckshot" );	
+	g_ItemRegistry.RegisterWeapon( "weapon_ns_shotgun", "ns", "buckshot", "", "ammo_buckshot" );
 }
 }

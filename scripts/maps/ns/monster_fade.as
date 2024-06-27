@@ -32,7 +32,19 @@ const string FADE_SOUND_IDLE = "ns/monsters/fade/role6_idle1.wav";
 const string FADE_SOUND_ALERT = "ns/monsters/fade/role6_move1.wav";
 const string FADE_SOUND_TAUNT1 = "ns/monsters/asay31.wav";
 
-
+array<string> SOUNDS = {
+	FADE_SOUND_LEAP,
+	FADE_SOUND_LEAP_HIT,
+	FADE_SOUND_ATTACK1,
+	FADE_SOUND_ATTACK2,
+	FADE_SOUND_ATTACK3,
+	FADE_SOUND_DEATH1,
+	FADE_SOUND_DEATH2,
+	FADE_SOUND_WOUND1,
+	FADE_SOUND_IDLE,
+	FADE_SOUND_ALERT,
+	FADE_SOUND_TAUNT1
+};
 
 //Stats
 const float BITE_DMG = 25;
@@ -171,21 +183,11 @@ class monster_fade : ScriptBaseMonsterEntity
 		//precache shit here
 		g_Game.PrecacheModel( MODEL );
 		
-		g_SoundSystem.PrecacheSound( FADE_SOUND_IDLE );
-		g_SoundSystem.PrecacheSound( FADE_SOUND_LEAP );
-		g_SoundSystem.PrecacheSound( FADE_SOUND_LEAP_HIT );
-		g_SoundSystem.PrecacheSound( FADE_SOUND_ATTACK1 );
-		g_SoundSystem.PrecacheSound( FADE_SOUND_ATTACK2 );
-		g_SoundSystem.PrecacheSound( FADE_SOUND_ATTACK3 );
-		
-		g_SoundSystem.PrecacheSound( FADE_SOUND_DEATH1 );
-		g_SoundSystem.PrecacheSound( FADE_SOUND_DEATH2 );
-		
-		g_SoundSystem.PrecacheSound( FADE_SOUND_WOUND1 );
-		
-		g_SoundSystem.PrecacheSound( FADE_SOUND_IDLE );
-		g_SoundSystem.PrecacheSound( FADE_SOUND_ALERT );
-		g_SoundSystem.PrecacheSound( FADE_SOUND_TAUNT1 );
+		for( uint i = 0; i < SOUNDS.length(); i++ )
+		{
+			g_SoundSystem.PrecacheSound( SOUNDS[i] );
+			g_Game.PrecacheGeneric( "sound/" + SOUNDS[i] );
+		}		
 	}
 	
 	int Classify()
@@ -344,22 +346,25 @@ class monster_fade : ScriptBaseMonsterEntity
 				{
 					return BaseClass.GetSchedule();	
 				}
-			
-				self.pev.movetype = MOVETYPE_STEP;
-				CBaseEntity@ pTarget = self.m_hEnemy.GetEntity();
-				float distToEnemy = ( self.pev.origin - pTarget.pev.origin).Length();
-			
 				if( self.HasConditions( bits_COND_HEAVY_DAMAGE ) )
 				{
 					return BaseClass.GetScheduleOfType( SCHED_TAKE_COVER_FROM_ENEMY );
 				}
-				if( distToEnemy < 64 && self.HasConditions( bits_COND_CAN_MELEE_ATTACK1 ) && pTarget.pev.velocity == Vector( 0, 0, 0 ) )
+
+				self.pev.movetype = MOVETYPE_STEP;
+				CBaseEntity@ pTarget = self.m_hEnemy.GetEntity();
+				
+				if( pTarget !is null )
 				{
-					return GetScheduleOfType( SCHED_MELEE_ATTACK1 );
-				}
-				if( distToEnemy >= 180 && distToEnemy <= 360 && m_flNextLeapAttack < g_Engine.time )
-				{
-					return GetScheduleOfType( SCHED_RANGE_ATTACK1 );
+					float distToEnemy = ( self.pev.origin - pTarget.pev.origin).Length();
+					if( distToEnemy < 64 && self.HasConditions( bits_COND_CAN_MELEE_ATTACK1 ) && pTarget.pev.velocity == Vector( 0, 0, 0 ) )
+					{
+						return GetScheduleOfType( SCHED_MELEE_ATTACK1 );
+					}
+					if( distToEnemy >= 180 && distToEnemy <= 360 && m_flNextLeapAttack < g_Engine.time )
+					{
+						return GetScheduleOfType( SCHED_RANGE_ATTACK1 );
+					}
 				}
 				if( !self.HasConditions( bits_COND_CAN_RANGE_ATTACK1 ) )
 				{
@@ -452,17 +457,20 @@ class monster_fade : ScriptBaseMonsterEntity
 	
 	void MonsterThink()
 	{
-		BaseClass.Think();	
+		BaseClass.Think();
 		if( @self.m_pSchedule is GetScheduleOfType( SCHED_CHASE_ENEMY ) && m_flNextLeapAttack < g_Engine.time )
 		{
 			CBaseEntity@ pTarget = self.m_hEnemy.GetEntity();
-			float distToEnemy = ( self.pev.origin - pTarget.pev.origin ).Length();
-			
-			//if( distToEnemy >= 160 && distToEnemy <= 224 )
-			if( distToEnemy >= 180 && distToEnemy <= 360 )
+			if( pTarget !is null )
 			{
-				self.ChangeSchedule( GetScheduleOfType( SCHED_RANGE_ATTACK1 ) );
-				m_flNextLeapAttack = g_Engine.time + 4;
+				float distToEnemy = ( self.pev.origin - pTarget.pev.origin ).Length();
+				
+				//if( distToEnemy >= 160 && distToEnemy <= 224 )
+				if( distToEnemy >= 180 && distToEnemy <= 360 )
+				{
+					self.ChangeSchedule( GetScheduleOfType( SCHED_RANGE_ATTACK1 ) );
+					m_flNextLeapAttack = g_Engine.time + 4;
+				}
 			}
 		}
 		
@@ -470,18 +478,19 @@ class monster_fade : ScriptBaseMonsterEntity
 		if( @self.m_pSchedule is GetScheduleOfType( SCHED_CHASE_ENEMY ) )
 		{
 			CBaseEntity@ pEnemy = cast<CBaseEntity@>( self.m_hEnemy.GetEntity() );
-			float distToEnemy = ( self.pev.origin - pEnemy.pev.origin).Length();
-			
-			if( self.pev.gaitsequence != 3 )
-				self.pev.gaitsequence = 3;
+
 			if( pEnemy !is null )
 			{
+				float distToEnemy = ( self.pev.origin - pEnemy.pev.origin).Length();
+				
+				if( self.pev.gaitsequence != 3 )
+					self.pev.gaitsequence = 3;
 				if( distToEnemy <= 80 && self.FInViewCone( pEnemy ) && self.pev.FlagBitSet( FL_ONGROUND ) && self.m_flNextAttack < g_Engine.time )
 				{
 					if( self.pev.sequence != 8 )
 					{
 						self.pev.sequence = 8;
-						self.pev.gaitsequence = 3;					
+						self.pev.gaitsequence = 3;
 					}
 				}
 			}
@@ -529,10 +538,9 @@ class monster_fade : ScriptBaseMonsterEntity
 
 		g_Utility.TraceHull( vecStart, vecEnd, dont_ignore_monsters, head_hull, pThis.edict(), tr );
 
-		if( tr.pHit !is null )
+		CBaseEntity@ pEntity = g_EntityFuncs.Instance( tr.pHit );
+		if( pEntity !is null )
 		{
-			CBaseEntity@ pEntity = g_EntityFuncs.Instance( tr.pHit );
-
 			if( iDamage > 0 )
 			{
 				pEntity.TakeDamage( pThis.pev, pThis.pev, iDamage, iDmgType );

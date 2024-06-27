@@ -32,6 +32,18 @@ const string GORGE_SOUND_IDLE = "ns/monsters/gorge/role3_idle1.wav";
 const string GORGE_SOUND_ALERT = "ns/monsters/gorge/role3_spawn1.wav";
 const string GORGE_SOUND_SPRAY = "ns/monsters/gorge/alien_spray.wav";
 
+array<string> SOUNDS = {
+	GORGE_SOUND_SPIT1,
+	GORGE_SOUND_SPIT2,
+	GORGE_SOUND_DEATH1,
+	GORGE_SOUND_DEATH2,
+	GORGE_SOUND_WOUND1,
+	GORGE_SOUND_WOUND2,
+	GORGE_SOUND_IDLE,
+	GORGE_SOUND_ALERT,
+	GORGE_SOUND_SPRAY
+};
+
 //Stats
 const float SPIT_DMG = 15;
 const float SPIT_LIFETIME = 2.0;
@@ -140,18 +152,11 @@ class monster_gorge : ScriptBaseMonsterEntity
 		g_Game.PrecacheModel( SPRITE_SPIT_PROJ );
 		g_Game.PrecacheModel( SPRITE_SPRAY );
 		
-		g_SoundSystem.PrecacheSound( GORGE_SOUND_IDLE );
-		g_SoundSystem.PrecacheSound( GORGE_SOUND_SPIT1 );
-		g_SoundSystem.PrecacheSound( GORGE_SOUND_SPIT2 );
-		
-		g_SoundSystem.PrecacheSound( GORGE_SOUND_DEATH1 );
-		g_SoundSystem.PrecacheSound( GORGE_SOUND_DEATH2 );
-		g_SoundSystem.PrecacheSound( GORGE_SOUND_WOUND1 );
-		g_SoundSystem.PrecacheSound( GORGE_SOUND_WOUND2 );
-		
-		g_SoundSystem.PrecacheSound( GORGE_SOUND_IDLE );
-		g_SoundSystem.PrecacheSound( GORGE_SOUND_ALERT );
-		g_SoundSystem.PrecacheSound( GORGE_SOUND_SPRAY );
+		for( uint i = 0; i < SOUNDS.length(); i++ )
+		{
+			g_SoundSystem.PrecacheSound( SOUNDS[i] );
+			g_Game.PrecacheGeneric( "sound/" + SOUNDS[i] );
+		}
 
 		g_Game.PrecacheMonster( "monster_offensechamber", true );
 	}
@@ -258,7 +263,7 @@ class monster_gorge : ScriptBaseMonsterEntity
 					{
 						return BaseClass.GetScheduleOfType( SCHED_INVESTIGATE_COMBAT );
 					}
-				}				
+				}
 				if( !self.HasConditions( bits_COND_SEE_ENEMY ) )
 				{
 					self.m_hTargetEnt = FindHealingTarget();
@@ -408,7 +413,7 @@ class monster_gorge : ScriptBaseMonsterEntity
 
 		if( flDist <= 784 && flDot >= 0.5 && g_Engine.time >= m_flNextSpitTime )
 		{
-			if( self.m_hEnemy.GetEntity() is null )
+			if( self.m_hEnemy.GetEntity() !is null )
 			{
 				if( abs( self.pev.origin.z - self.m_hEnemy.GetEntity().pev.origin.z ) > 256 )
 				{
@@ -466,10 +471,9 @@ class monster_gorge : ScriptBaseMonsterEntity
 
 		g_Utility.TraceHull( vecStart, vecEnd, dont_ignore_monsters, head_hull, pThis.edict(), tr );
 
-		if( tr.pHit !is null )
+		CBaseEntity@ pEntity = g_EntityFuncs.Instance( tr.pHit );
+		if( pEntity !is null )
 		{
-			CBaseEntity@ pEntity = g_EntityFuncs.Instance( tr.pHit );
-
 			if( iDamage > 0 )
 			{
 				pEntity.TakeDamage( pThis.pev, pThis.pev, iDamage, iDmgType );
@@ -516,7 +520,7 @@ class monster_gorge : ScriptBaseMonsterEntity
 			IdleSound();
 
 		BaseClass.RunAI();
-	}		
+	}
 	
 	void IdleSound()
 	{
@@ -538,12 +542,10 @@ class monster_gorge : ScriptBaseMonsterEntity
 	{ 
 		if( m_healTime > g_Engine.time )
 		{
-			//g_Game.AlertMessage( at_console, "too soon to heal\n" );
 			return false;
 		}
 		if( !self.m_hTargetEnt )
 		{
-			//g_Game.AlertMessage( at_console, "no target\n" );
 			return false;
 		}
 	
@@ -557,43 +559,26 @@ class monster_gorge : ScriptBaseMonsterEntity
 	{
 		CBaseEntity@ pFriend, pNearest;
 		array<CBaseEntity@> healTargets;
-		
-		//while( ( @pFriend = g_EntityFuncs.FindEntityInSphere( pFriend, self.pev.origin, 1024 ) ) !is null )
+
 		for( uint i = 0; i < healable_targets.length(); i++ )
 		{
 			while( ( @pFriend = g_EntityFuncs.FindEntityByClassname( pFriend, healable_targets[i] ) ) !is null )
 			{
-				//g_Game.AlertMessage( at_console, "running loop\n" );
 				if( pFriend is null || pFriend is self )
-				{
-					//g_Game.AlertMessage( at_console, "pFriend was null\n" );
 					continue;
-				}
-				//g_Game.AlertMessage( at_console, "currently looking at: " + pFriend.pev.classname + "\n" );
-				//if( !pFriend.IsAlive() || !self.FVisible( pFriend, false ) || self.IRelationship( pFriend ) != R_AL )
-				//	continue;
-				
+
 				if( !pFriend.IsAlive() )
-				{
-					//g_Game.AlertMessage( at_console, "he's dead jim\n" );
-					continue;			
-				}
+					continue;
+					
 				if( !self.FVisible( pFriend, false ) )
-				{
-					//g_Game.AlertMessage( at_console, "can't see shit mate\n" );
-					continue;			
-				}
+					continue;
 
 				if( self.IRelationship( pFriend ) != R_AL )
-				{
-					//g_Game.AlertMessage( at_console, "you're not my pal, buddy\n" );
-					continue;			
-				}
-				if( pFriend.pev.health >= pFriend.pev.max_health )
-				{
-					//g_Game.AlertMessage( at_console, "not hurt enough\n" );
 					continue;
-				}				
+
+				if( pFriend.pev.health >= pFriend.pev.max_health )
+					continue;
+
 				healTargets.insertLast( pFriend );
 			}
 		}
@@ -668,20 +653,13 @@ class monster_gorge : ScriptBaseMonsterEntity
 	bool CanBuild()
 	{ 
 		if( m_flBuildTime > g_Engine.time )
-		{
-			//g_Game.AlertMessage( at_console, "too soon to build\n" );
 			return false;
-		}
+
 		if( !self.m_hTargetEnt )
-		{
-			//g_Game.AlertMessage( at_console, "no target\n" );
 			return false;
-		}
+
 		if( self.m_hTargetEnt.GetEntity().pev.classname != "info_gorge_node" )
 			return false;
-	
-		//if( ( m_healTime > g_Engine.time ) || ( !self.m_hTargetEnt ) || ( self.m_hTargetEnt.GetEntity().pev.health >= self.m_hTargetEnt.GetEntity().pev.max_health ) )
-		//	return false;
 
 		return true;
 	}
@@ -691,30 +669,17 @@ EHandle FindValidBuildNode()
 		CBaseEntity@ pNode, pNearest;
 		array<CBaseEntity@> buildNodes;
 		
-		//while( ( @pFriend = g_EntityFuncs.FindEntityInSphere( pFriend, self.pev.origin, 1024 ) ) !is null )
 		while( ( @pNode = g_EntityFuncs.FindEntityByClassname( pNode, "info_gorge_node" ) ) !is null )
 		{
-			//Message( at_console, "running loop\n" );
 			if( pNode is null )
-			{
-				//g_Game.AlertMessage( at_console, "pNode was null\n" );
 				continue;
-			}
-			//g_Game.AlertMessage( at_console, "currently looking at: " + pNode.pev.classname + "\n" );
-			//if( !pFriend.IsAlive() || !self.FVisible( pFriend, false ) || self.IRelationship( pFriend ) != R_AL )
-			//	continue;
 			
 			CGorgeNode@ pNodeEntity = cast<CGorgeNode@>( g_EntityFuncs.CastToScriptClass( @pNode ) );
 			if( pNodeEntity.GetBuilding() || pNodeEntity.GetInvalid() )
-			{
-				//g_Game.AlertMessage( at_console, "he's invalid jim\n" );
-				continue;			
-			}
+				continue;
+
 			if( !self.FVisible( pNode, false ) )
-			{
-				//g_Game.AlertMessage( at_console, "can't see shit mate\n" );
-				continue;			
-			}
+				continue;
 			
 			buildNodes.insertLast( pNode );
 		}
@@ -789,7 +754,7 @@ EHandle FindValidBuildNode()
 
 		//Build cooldown
 		m_flBuildTime = g_Engine.time + BUILD_COOLDOWN;
-	}				
+	}
 }
 
 class CGorgeSpit : ScriptBaseEntity
@@ -829,23 +794,24 @@ class CGorgeSpit : ScriptBaseEntity
 	
 	void SpitTouch( CBaseEntity@ pOther )
 	{
-		if( !m_hOwner )
+		if( pOther !is null )
 		{
-			if( self.pev.owner !is null )
-			{	
-				m_hOwner = EHandle( g_EntityFuncs.Instance( self.pev.owner ) );		
-			}			
-		}
-		
-		if( pOther !is m_hOwner.GetEntity() )
-		{
-			if( self.IRelationship( pOther ) != -2 )
-				pOther.TakeDamage( self.pev, m_hOwner.GetEntity().pev, SPIT_DMG, DMG_ACID );
-				
-			SpitDeath();
-		}
-
+			if( !m_hOwner )
+			{
+				if( self.pev.owner !is null )
+				{
+					m_hOwner = EHandle( g_EntityFuncs.Instance( self.pev.owner ) );
+				}
+			}
 			
+			if( m_hOwner.GetEntity() !is null && pOther !is m_hOwner.GetEntity() )
+			{
+				if( self.IRelationship( pOther ) != -2 )
+					pOther.TakeDamage( self.pev, m_hOwner.GetEntity().pev, SPIT_DMG, DMG_ACID );
+					
+				SpitDeath();
+			}
+		}
 	}
 
 }
@@ -909,7 +875,7 @@ class CGorgeNode : ScriptBaseEntity
 	void SetInvalid( bool blInvalid )
 	{
 		m_blInvalid = blInvalid;
-	}	
+	}
 }
 
 void Register()

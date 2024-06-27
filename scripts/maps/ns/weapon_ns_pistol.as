@@ -38,6 +38,14 @@ const string szSoundClipIn = "ns/weapons/hg/pistol_clipin.wav";
 const string szSoundClipOut = "ns/weapons/hg/pistol_clipout.wav";
 const string szSoundSlideRelease = "ns/weapons/hg/pistol_slide_release.wav";
 
+array<string> SOUNDS = {
+	szSoundPrimaryFire,
+	szSoundDraw,
+	szSoundClipIn,
+	szSoundClipOut,
+	szSoundSlideRelease
+};
+
 //Anim timings
 const float flDeployTime = 1.1f;
 const float flReloadTime = 3.0;
@@ -91,11 +99,11 @@ class weapon_ns_pistol : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 		g_Game.PrecacheModel( szModelW );
 		m_iShell = g_Game.PrecacheModel( szShell );
 		
-		g_SoundSystem.PrecacheSound( szSoundPrimaryFire );
-		g_SoundSystem.PrecacheSound( szSoundDraw );
-		g_SoundSystem.PrecacheSound( szSoundClipIn );
-		g_SoundSystem.PrecacheSound( szSoundClipOut );
-		g_SoundSystem.PrecacheSound( szSoundSlideRelease );	
+		for( uint i = 0; i < SOUNDS.length(); i++ )
+		{
+			g_SoundSystem.PrecacheSound( SOUNDS[i] );
+			g_Game.PrecacheGeneric( "sound/" + SOUNDS[i] );
+		}
 		
 		CommonPrecache();
 	}
@@ -229,7 +237,7 @@ class weapon_ns_pistol : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 			Reload( MAX_CLIP, RELOAD, flReloadTime, GetBodygroup() );
 		
 		BaseClass.Reload();
-    }
+	}
 	
 	void WeaponIdle()
 	{
@@ -247,6 +255,6 @@ class weapon_ns_pistol : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 void Register()
 {
 	g_CustomEntityFuncs.RegisterCustomEntity( "NS_PISTOL::weapon_ns_pistol", "weapon_ns_pistol" );
-	g_ItemRegistry.RegisterWeapon( "weapon_ns_pistol", "ns", "9mm" );	
+	g_ItemRegistry.RegisterWeapon( "weapon_ns_pistol", "ns", "9mm", "", "ammo_9mmclip" );
 }
 }

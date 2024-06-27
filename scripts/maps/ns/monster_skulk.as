@@ -30,6 +30,19 @@ const string SKULK_SOUND_WOUND2 = "ns/monsters/skulk/role4_wound2.wav";
 const string SKULK_SOUND_IDLE = "ns/monsters/skulk/role4_idle1.wav";
 const string SKULK_SOUND_ALERT = "ns/monsters/skulk/role5_move1.wav";
 
+array<string> SOUNDS = {
+	SKULK_SOUND_LEAP,
+	SKULK_SOUND_LEAP_HIT,
+	SKULK_SOUND_BITE1,
+	SKULK_SOUND_BITE2,
+	SKULK_SOUND_DEATH1,
+	SKULK_SOUND_DEATH2,
+	SKULK_SOUND_WOUND1,
+	SKULK_SOUND_WOUND2,
+	SKULK_SOUND_IDLE,
+	SKULK_SOUND_ALERT 
+};
+
 //Stats
 const float BITE_DMG = 25;
 const float LEAP_DMG = 25;
@@ -101,19 +114,11 @@ class monster_skulk : ScriptBaseMonsterEntity
 		//precache shit here
 		g_Game.PrecacheModel( MODEL );
 		
-		g_SoundSystem.PrecacheSound( SKULK_SOUND_IDLE );
-		g_SoundSystem.PrecacheSound( SKULK_SOUND_LEAP );
-		g_SoundSystem.PrecacheSound( SKULK_SOUND_LEAP_HIT );
-		g_SoundSystem.PrecacheSound( SKULK_SOUND_BITE1 );
-		g_SoundSystem.PrecacheSound( SKULK_SOUND_BITE2 );
-		
-		g_SoundSystem.PrecacheSound( SKULK_SOUND_DEATH1 );
-		g_SoundSystem.PrecacheSound( SKULK_SOUND_DEATH2 );
-		g_SoundSystem.PrecacheSound( SKULK_SOUND_WOUND1 );
-		g_SoundSystem.PrecacheSound( SKULK_SOUND_WOUND2 );
-		
-		g_SoundSystem.PrecacheSound( SKULK_SOUND_IDLE );
-		g_SoundSystem.PrecacheSound( SKULK_SOUND_ALERT );
+		for( uint i = 0; i < SOUNDS.length(); i++ )
+		{
+			g_SoundSystem.PrecacheSound( SOUNDS[i] );
+			g_Game.PrecacheGeneric( "sound/" + SOUNDS[i] );
+		}
 	}
 	
 	int Classify()
@@ -206,30 +211,34 @@ class monster_skulk : ScriptBaseMonsterEntity
 	Schedule@ GetSchedule()
 	{
 		switch( self.m_MonsterState )
-		{			
+		{
 			case MONSTERSTATE_COMBAT:
 			{	
 				if( self.HasConditions( bits_COND_ENEMY_DEAD ) )
 				{
 					return BaseClass.GetSchedule();	
-				}			
-			
-				self.pev.movetype = MOVETYPE_STEP;
-				CBaseEntity@ pTarget = self.m_hEnemy.GetEntity();
-				float distToEnemy = ( self.pev.origin - pTarget.pev.origin).Length();
-			
+				}
+
 				if( self.HasConditions( bits_COND_HEAVY_DAMAGE ) )
 				{
 					return BaseClass.GetScheduleOfType( SCHED_TAKE_COVER_FROM_ENEMY );
 				}
-			
-				if( distToEnemy < 96 && self.HasConditions( bits_COND_CAN_MELEE_ATTACK1 ) )
+
+				self.pev.movetype = MOVETYPE_STEP;
+				CBaseEntity@ pTarget = self.m_hEnemy.GetEntity();
+
+				if( pTarget !is null )
 				{
-					return BaseClass.GetScheduleOfType( SCHED_MELEE_ATTACK1 );
-				}
-				else if( distToEnemy >= 160 && distToEnemy <= 224 )
-				{
-					return GetScheduleOfType( SCHED_RANGE_ATTACK1 );
+					float distToEnemy = ( self.pev.origin - pTarget.pev.origin).Length();
+
+					if( distToEnemy < 96 && self.HasConditions( bits_COND_CAN_MELEE_ATTACK1 ) )
+					{
+						return BaseClass.GetScheduleOfType( SCHED_MELEE_ATTACK1 );
+					}
+					else if( distToEnemy >= 160 && distToEnemy <= 224 )
+					{
+						return GetScheduleOfType( SCHED_RANGE_ATTACK1 );
+					}
 				}
 				else
 					return BaseClass.GetSchedule();
@@ -296,12 +305,16 @@ class monster_skulk : ScriptBaseMonsterEntity
 		if( @self.m_pSchedule is BaseClass.GetScheduleOfType( SCHED_CHASE_ENEMY ) && m_flNextLeapAttack < g_Engine.time )
 		{
 			CBaseEntity@ pTarget = self.m_hEnemy.GetEntity();
-			float distToEnemy = ( self.pev.origin - pTarget.pev.origin ).Length();
 			
-			if( distToEnemy >= 160 && distToEnemy <= 224 )
+			if( pTarget !is null )
 			{
-				self.ChangeSchedule( BaseClass.GetScheduleOfType( SCHED_RANGE_ATTACK1 ) );
-				m_flNextLeapAttack = g_Engine.time + 4;
+				float distToEnemy = ( self.pev.origin - pTarget.pev.origin ).Length();
+				
+				if( distToEnemy >= 160 && distToEnemy <= 224 )
+				{
+					self.ChangeSchedule( BaseClass.GetScheduleOfType( SCHED_RANGE_ATTACK1 ) );
+					m_flNextLeapAttack = g_Engine.time + 4;
+				}
 			}
 		}
 	}
@@ -345,10 +358,9 @@ class monster_skulk : ScriptBaseMonsterEntity
 
 		g_Utility.TraceHull( vecStart, vecEnd, dont_ignore_monsters, head_hull, pThis.edict(), tr );
 
-		if( tr.pHit !is null )
+		CBaseEntity@ pEntity = g_EntityFuncs.Instance( tr.pHit );
+		if( pEntity !is null )
 		{
-			CBaseEntity@ pEntity = g_EntityFuncs.Instance( tr.pHit );
-
 			if( iDamage > 0 )
 			{
 				pEntity.TakeDamage( pThis.pev, pThis.pev, iDamage, iDmgType );

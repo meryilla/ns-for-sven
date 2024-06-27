@@ -41,6 +41,16 @@ const string SND_CLOSE = "ns/weapons/hmg/hmg_close.wav";
 const string SND_OPEN = "ns/weapons/hmg/hmg_open.wav";
 const string SND_SLIDE = "ns/weapons/hmg/hmg_slide.wav";
 
+array<string> SOUNDS = {
+	SND_FIRE,
+	SND_DRAW,
+	SND_CLIP_IN ,
+	SND_CLIP_OUT,
+	SND_CLOSE,
+	SND_OPEN,
+	SND_SLIDE
+};
+
 //Anim timings
 const float DEPLOY_TIME = 1.1f;
 const float RELOAD_TIME = 7.5;
@@ -90,13 +100,11 @@ class weapon_ns_heavymachinegun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBa
 		g_Game.PrecacheModel( MODEL_W );
 		m_iShell = g_Game.PrecacheModel( MODEL_SHELL );
 		
-		g_SoundSystem.PrecacheSound( SND_FIRE );
-		g_SoundSystem.PrecacheSound( SND_DRAW );
-		g_SoundSystem.PrecacheSound( SND_CLIP_IN );
-		g_SoundSystem.PrecacheSound( SND_CLIP_OUT );
-		g_SoundSystem.PrecacheSound( SND_CLOSE );
-		g_SoundSystem.PrecacheSound( SND_OPEN );
-		g_SoundSystem.PrecacheSound( SND_SLIDE );
+		for( uint i = 0; i < SOUNDS.length(); i++ )
+		{
+			g_SoundSystem.PrecacheSound( SOUNDS[i] );
+			g_Game.PrecacheGeneric( "sound/" + SOUNDS[i] );
+		}
 		
 		CommonPrecache();
 	}
@@ -239,7 +247,7 @@ class weapon_ns_heavymachinegun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBa
 		Reload( MAX_CLIP, RELOAD, RELOAD_TIME, GetBodygroup() );
 		
 		BaseClass.Reload();
-    }
+	}
 	
 	void WeaponIdle()
 	{
@@ -257,6 +265,6 @@ class weapon_ns_heavymachinegun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBa
 void Register()
 {
 	g_CustomEntityFuncs.RegisterCustomEntity( "NS_HEAVYMACHINEGUN::weapon_ns_heavymachinegun", "weapon_ns_heavymachinegun" );
-	g_ItemRegistry.RegisterWeapon( "weapon_ns_heavymachinegun", "ns", "556" );	
+	g_ItemRegistry.RegisterWeapon( "weapon_ns_heavymachinegun", "ns", "556", "", "ammo_556clip" );
 }
 }

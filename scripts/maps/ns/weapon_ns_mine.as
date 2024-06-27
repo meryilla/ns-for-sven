@@ -38,6 +38,14 @@ const string SND_ACTIVATE = "ns/weapons/mine/mine_activate.wav";
 const string SND_CHARGE = "ns/weapons/mine/mine_charge.wav";
 const string SND_STEP = "ns/weapons/mine/mine_step.wav";
 
+array<string> SOUNDS = {
+	SND_DRAW,
+	SND_DEPLOY,
+	SND_ACTIVATE,
+	SND_CHARGE,
+	SND_STEP
+};
+
 //Anim timings
 const float DEPLOY_TIME = 3.1f;
 //Item info
@@ -84,11 +92,11 @@ class weapon_ns_mine : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 		g_Game.PrecacheModel( MODEL_W );
 		g_Game.PrecacheModel( MODEL_W2 );
 		
-		g_SoundSystem.PrecacheSound( SND_DRAW );
-		g_SoundSystem.PrecacheSound( SND_DEPLOY );
-		g_SoundSystem.PrecacheSound( SND_ACTIVATE );
-		g_SoundSystem.PrecacheSound( SND_CHARGE );
-		g_SoundSystem.PrecacheSound( SND_STEP );
+		for( uint i = 0; i < SOUNDS.length(); i++ )
+		{
+			g_SoundSystem.PrecacheSound( SOUNDS[i] );
+			g_Game.PrecacheGeneric( "sound/" + SOUNDS[i] );
+		}
 		
 		CommonPrecache();
 	}

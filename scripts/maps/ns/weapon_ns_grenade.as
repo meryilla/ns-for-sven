@@ -38,6 +38,12 @@ const string SND_DRAW = "ns/weapons/gr/grenade_draw.wav";
 const string SND_PRIME = "ns/weapons/gr/grenade_prime.wav";
 const string SND_THROW = "ns/weapons/gr/grenade_throw.wav";
 
+array<string> SOUNDS = {
+	SND_DRAW,
+	SND_PRIME,
+	SND_THROW
+};
+
 array<string> GrenExplodeSounds =
 {
 	"ns/weapons/explode3.wav",
@@ -59,7 +65,7 @@ const int FLAGS = ITEM_FLAG_LIMITINWORLD | ITEM_FLAG_EXHAUSTIBLE;
 const int DEFAULT_AMMO = 1;
 
 //Stats
-const int DAMAGE = 100;
+const int DAMAGE = 150;
 //const int RANGE = 35;
 //const float ROF = 0.65;
 //const float XPUNCH = .75;
@@ -93,7 +99,7 @@ class weapon_ns_grenade : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 	{
 		Precache();
 		self.m_iDefaultAmmo = DEFAULT_AMMO;
-		g_EntityFuncs.SetModel( self, MODEL_W );		
+		g_EntityFuncs.SetModel( self, MODEL_W );
 		self.FallInit();
 	}
 
@@ -102,26 +108,32 @@ class weapon_ns_grenade : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 		g_Game.PrecacheModel( MODEL_P );
 		g_Game.PrecacheModel( MODEL_V );
 		g_Game.PrecacheModel( MODEL_W );
+
+		g_Game.PrecacheOther( "proj_ns_grenade" );
 		
-		g_SoundSystem.PrecacheSound( SND_DRAW );
-		g_SoundSystem.PrecacheSound( SND_PRIME );
-		g_SoundSystem.PrecacheSound( SND_THROW );
+		for( uint i = 0; i < SOUNDS.length(); i++ )
+		{
+			g_SoundSystem.PrecacheSound( SOUNDS[i] );
+			g_Game.PrecacheGeneric( "sound/" + SOUNDS[i] );
+		}
 		
 		//TODO REMOVE THEESE ARRRRRRAFEA
 		
-		string BOUNCE_SOUND1     	= "ns/weapons/gr/grenade_hit1.wav";
-		string BOUNCE_SOUND2     	= "ns/weapons/gr/grenade_hit2.wav";
-		string BOUNCE_SOUND3     	= "ns/weapons/gr/grenade_hit3.wav";		
-		g_Game.PrecacheModel( "sprites/eexplo.spr" );
-		g_Game.PrecacheModel( "sprites/fexplo.spr" );
-		g_Game.PrecacheModel( "sprites/steam1.spr" );
-		g_Game.PrecacheModel( "sprites/WXplo1.spr" );
-		g_SoundSystem.PrecacheSound( BOUNCE_SOUND1 );
-		g_SoundSystem.PrecacheSound( BOUNCE_SOUND2 );
-		g_SoundSystem.PrecacheSound( BOUNCE_SOUND3 );	
-
-		for( uint i = 0; i < GrenExplodeSounds.length(); i++ )
-			g_SoundSystem.PrecacheSound( GrenExplodeSounds[i] );		
+		//string BOUNCE_SOUND1     	= "ns/weapons/gr/grenade_hit1.wav";
+		//string BOUNCE_SOUND2     	= "ns/weapons/gr/grenade_hit2.wav";
+		//string BOUNCE_SOUND3     	= "ns/weapons/gr/grenade_hit3.wav";		
+		//g_Game.PrecacheModel( "sprites/eexplo.spr" );
+		//g_Game.PrecacheModel( "sprites/fexplo.spr" );
+		//g_Game.PrecacheModel( "sprites/steam1.spr" );
+		//g_Game.PrecacheModel( "sprites/WXplo1.spr" );
+		//g_SoundSystem.PrecacheSound( BOUNCE_SOUND1 );
+		//g_SoundSystem.PrecacheSound( BOUNCE_SOUND2 );
+		//g_SoundSystem.PrecacheSound( BOUNCE_SOUND3 );	
+//
+		//for( uint i = 0; i < GrenExplodeSounds.length(); i++ )
+		//{
+		//	g_SoundSystem.PrecacheSound( GrenExplodeSounds[i] );
+		//}
 		
 		CommonPrecache();
 	}

@@ -38,6 +38,13 @@ enum gg_anims
 	CANCEL_RELOAD_2OR3
 };
 
+enum reload_status
+{
+	kSpecialReloadNone = 0,
+	kSpecialReloadGotoReload,
+	kSpecialReloadReloadShell
+};
+
 //Models
 const string MODEL_P = "models/ns/p_gg.mdl";
 const string MODEL_V = "models/ns/v_gg.mdl";
@@ -53,6 +60,15 @@ const string SND_RELOAD_END = "ns/weapons/gg/gg_reload_end.wav";
 const string SND_RELOAD_START = "ns/weapons/gg/gg_reload_start.wav";
 const string SND_ROTATE = "ns/weapons/gg/gg_rotate.wav";
 
+array<string> SOUNDS = {
+	SND_FIRE,
+	SND_DRAW,
+	SND_INSERT,
+	SND_RELOAD_END,
+	SND_RELOAD_START,
+	SND_ROTATE
+};
+
 array<string> SND_GREN_EXPLODE_ARR =
 {
 	"ns/weapons/explode3.wav",
@@ -63,6 +79,12 @@ array<string> SND_GREN_EXPLODE_ARR =
 //Anim timings
 const float DEPLOY_TIME = 1.45f;
 const float RELOAD_TIME = 7.5;
+
+const float flDeployTime = 1.2f;
+const float flGotoReloadTime = 0.8f;
+const float flReloadShellTime = 1.1f;
+const float flEndReloadTime = 1.0f;
+const float flCancelReloadTime = 1.35f;
 
 //Item info
 const int MAX_AMMO = 32;
@@ -96,12 +118,14 @@ class weapon_ns_grenadegun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 	}	
 
 	private int m_iShell;
+	private int mSpecialReload = kSpecialReloadNone;
+	private float m_flNextReload;
 	
 	void Spawn()
 	{
 		Precache();
 		self.m_iDefaultAmmo = DEFAULT_AMMO;
-		g_EntityFuncs.SetModel( self, MODEL_W );		
+		g_EntityFuncs.SetModel( self, MODEL_W );
 		self.FallInit();
 	}
 
@@ -113,28 +137,29 @@ class weapon_ns_grenadegun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 		g_Game.PrecacheModel( MODEL_GREN );
 		m_iShell = g_Game.PrecacheModel( MODEL_SHELL );
 		
-		g_SoundSystem.PrecacheSound( SND_FIRE );
-		g_SoundSystem.PrecacheSound( SND_DRAW );
-		g_SoundSystem.PrecacheSound( SND_INSERT );		
-		g_SoundSystem.PrecacheSound( SND_RELOAD_END );
-		g_SoundSystem.PrecacheSound( SND_RELOAD_START );
-		g_SoundSystem.PrecacheSound( SND_ROTATE );
+		g_Game.PrecacheOther( "proj_ns_grenade" );
+
+		for( uint i = 0; i < SOUNDS.length(); i++ )
+		{
+			g_SoundSystem.PrecacheSound( SOUNDS[i] );
+			g_Game.PrecacheGeneric( "sound/" + SOUNDS[i] );
+		}
 
 		//TODO REMOVE THEESE ARRRRRRAFEA
 		
-		string BOUNCE_SOUND1     	= "ns/weapons/gr/grenade_hit1.wav";
-		string BOUNCE_SOUND2     	= "ns/weapons/gr/grenade_hit2.wav";
-		string BOUNCE_SOUND3     	= "ns/weapons/gr/grenade_hit3.wav";		
-		g_Game.PrecacheModel( "sprites/eexplo.spr" );
-		g_Game.PrecacheModel( "sprites/fexplo.spr" );
-		g_Game.PrecacheModel( "sprites/steam1.spr" );
-		g_Game.PrecacheModel( "sprites/WXplo1.spr" );
-		g_SoundSystem.PrecacheSound( BOUNCE_SOUND1 );
-		g_SoundSystem.PrecacheSound( BOUNCE_SOUND2 );
-		g_SoundSystem.PrecacheSound( BOUNCE_SOUND3 );	
-		
-		for( uint i = 0; i < SND_GREN_EXPLODE_ARR.length(); i++ )
-			g_SoundSystem.PrecacheSound( SND_GREN_EXPLODE_ARR[i] );				
+		//string BOUNCE_SOUND1     	= "ns/weapons/gr/grenade_hit1.wav";
+		//string BOUNCE_SOUND2     	= "ns/weapons/gr/grenade_hit2.wav";
+		//string BOUNCE_SOUND3     	= "ns/weapons/gr/grenade_hit3.wav";		
+		//g_Game.PrecacheModel( "sprites/eexplo.spr" );
+		//g_Game.PrecacheModel( "sprites/fexplo.spr" );
+		//g_Game.PrecacheModel( "sprites/steam1.spr" );
+		//g_Game.PrecacheModel( "sprites/WXplo1.spr" );
+		//g_SoundSystem.PrecacheSound( BOUNCE_SOUND1 );
+		//g_SoundSystem.PrecacheSound( BOUNCE_SOUND2 );
+		//g_SoundSystem.PrecacheSound( BOUNCE_SOUND3 );	
+		//
+		//for( uint i = 0; i < SND_GREN_EXPLODE_ARR.length(); i++ )
+		//	g_SoundSystem.PrecacheSound( SND_GREN_EXPLODE_ARR[i] );				
 		
 		CommonPrecache();
 	}
@@ -177,6 +202,8 @@ class weapon_ns_grenadegun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 
 	void Holster( int skipLocal = 0 )
 	{
+		self.m_fInReload = false;// cancel any reload in progress.
+		mSpecialReload = kSpecialReloadNone;		
 		BaseClass.Holster( skipLocal );
 	}	
 	
@@ -342,35 +369,139 @@ class weapon_ns_grenadegun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 		self.m_flTimeWeaponIdle = g_Engine.time + g_PlayerFuncs.SharedRandomLong( m_pPlayer.random_seed, 10, 15 );		
 			
 
-	}	
+	}
+
+	void ItemPostFrame()
+	{
+		// Checks if the player pressed one of the attack buttons, stops the reload and then attack
+		if( mSpecialReload != kSpecialReloadNone )
+		{
+			if( ( m_pPlayer.pev.button & (IN_ATTACK | IN_ATTACK2 | IN_ALT1) != 0 || ( self.m_iClip >= MAX_CLIP && m_pPlayer.pev.button & IN_RELOAD != 0 ) ) && m_flNextReload <= g_Engine.time )
+			{
+				//eh, this'll do
+				if( self.m_iClip == 2 || self.m_iClip == 3 )
+				{
+					self.SendWeaponAnim( CANCEL_RELOAD_2OR3, 0, GetBodygroup() );
+					self.m_flTimeWeaponIdle = g_Engine.time + flCancelReloadTime;
+					self.m_flNextPrimaryAttack = self.m_flNextSecondaryAttack = self.m_flNextTertiaryAttack = g_Engine.time + ROF;
+					mSpecialReload = kSpecialReloadNone;					
+				}
+				else if( self.m_iClip == 1 )
+				{
+					self.SendWeaponAnim( CANCEL_RELOAD_1, 0, GetBodygroup() );
+					self.m_flTimeWeaponIdle = g_Engine.time + flCancelReloadTime;
+					self.m_flNextPrimaryAttack = self.m_flNextSecondaryAttack = self.m_flNextTertiaryAttack = g_Engine.time + ROF;
+					mSpecialReload = kSpecialReloadNone;					
+				}
+			}
+		}
+		BaseClass.ItemPostFrame();
+	}			
+
+	//void Reload()
+	//{
+	//	if( self.m_iClip == MAX_CLIP || m_pPlayer.m_rgAmmo( self.m_iPrimaryAmmoType ) <= 0 )
+	//		return;			
+	//		
+	//	Reload( MAX_CLIP, GetReloadAnimation(), GetReloadTime(), GetBodygroup() );
+	//	
+	//	BaseClass.Reload();
+	//}
 
 	void Reload()
-	{		
+	{
 		int iAmmo = m_pPlayer.m_rgAmmo( self.m_iPrimaryAmmoType );
-		if( self.m_iClip == MAX_CLIP || m_pPlayer.m_rgAmmo( self.m_iPrimaryAmmoType ) <= 0 )
+		if( self.m_iClip == MAX_CLIP || iAmmo <= 0 )
+			return;
+			
+		if( m_flNextReload > g_Engine.time )
 			return;			
 			
-		Reload( MAX_CLIP, GetReloadAnimation(), GetReloadTime(), GetBodygroup() );
-		
-		BaseClass.Reload();
-    }
+		if( ( iAmmo != 0 ) && ( self.m_iClip < MAX_CLIP ) )
+		{
+			// don't reload until recoil is done
+			if( self.m_flNextPrimaryAttack <= g_Engine.time )
+			{
+				if( mSpecialReload == kSpecialReloadNone )
+				{
+					// Start reload
+					mSpecialReload = kSpecialReloadGotoReload;
 	
-	//void WeaponIdle()
-	//{
-	//	self.ResetEmptySound();
-	//	m_pPlayer.GetAutoaimVector( AUTOAIM_5DEGREES );
-	//
-	//	if( self.m_flTimeWeaponIdle < g_Engine.time && self.m_iClip != 0 )
-	//	{
-	//		self.SendWeaponAnim( GetIdleAnimation(), 0, GetBodygroup() );
-	//			
-	//		self.m_flTimeWeaponIdle = g_Engine.time + g_PlayerFuncs.SharedRandomFloat( m_pPlayer.random_seed, 5, 7 );
-	//	}
-	//}	
+					self.SendWeaponAnim( GetReloadAnimation(), 0, GetBodygroup() );
+	
+					//m_pPlayer.m_flNextAttack = g_Engine.time + flGotoReloadTime;
+					m_flNextReload = g_Engine.time + flGotoReloadTime;
+					self.m_flTimeWeaponIdle = self.m_flNextPrimaryAttack = self.m_flNextSecondaryAttack = g_Engine.time + flGotoReloadTime;
+				
+				}
+				else if( mSpecialReload == kSpecialReloadGotoReload )
+				{
+					if( self.m_flTimeWeaponIdle <= g_Engine.time )
+					{
+						// was waiting for gun to move to side
+						mSpecialReload = kSpecialReloadReloadShell;
+						//self.SendWeaponAnim( RELOAD, 0, GetBodygroup() );
+						m_flNextReload = g_Engine.time + flReloadShellTime;
+						self.m_flTimeWeaponIdle = self.m_flNextPrimaryAttack = self.m_flNextSecondaryAttack = g_Engine.time + flReloadShellTime;
+					}
+				}
+				else if( mSpecialReload == kSpecialReloadReloadShell )
+				{
+					//DefaultReload(MAX_CLIP, theReloadAnimation, theReloadTime);
+	
+					// Don't idle for a bit
+					//this->SetNextIdle();
+	
+					// Add them to the clip
+					self.m_iClip++;
+					iAmmo -= 1;
+					mSpecialReload = kSpecialReloadGotoReload;
+				}
+		
+				
+			}
+		}
+		m_pPlayer.m_rgAmmo( self.m_iPrimaryAmmoType, iAmmo );		
+		BaseClass.Reload();
+	}	
+	
+	void WeaponIdle()
+	{
+		self.ResetEmptySound();
+		m_pPlayer.GetAutoaimVector( AUTOAIM_10DEGREES );
+		
+		if( self.m_flTimeWeaponIdle < g_Engine.time )
+		{
+			if( ( self.m_iClip == 0 ) && ( mSpecialReload == kSpecialReloadNone ) && m_pPlayer.m_rgAmmo( self.m_iPrimaryAmmoType ) != 0 )
+				self.Reload();
+			else if( mSpecialReload != kSpecialReloadNone )
+			{
+				if( self.m_iClip != MAX_CLIP && m_pPlayer.m_rgAmmo( self.m_iPrimaryAmmoType ) != 0 )
+					self.Reload();
+				else
+				{
+					// reload debounce has timed out
+					mSpecialReload = kSpecialReloadNone;
+		
+					//self.SendWeaponAnim( END_RELOAD, 0, GetBodygroup() );
+					self.m_flTimeWeaponIdle = g_Engine.time + flEndReloadTime;
+				}
+			}
+			else
+			{
+				// Hack to prevent idle animation from playing mid-reload.  Not sure how to fix this right, but all this special reloading is happening server-side, client doesn't know about it
+				if( self.m_iClip == MAX_CLIP )
+				{
+					//self.SendWeaponAnim( GetIdleAnimation(), 0, GetBodygroup() );
+					self.m_flTimeWeaponIdle = g_Engine.time + g_PlayerFuncs.SharedRandomFloat( m_pPlayer.random_seed, 5, 7 );
+				}
+			}
+		}
+	}	
 }
 void Register()
 {
 	g_CustomEntityFuncs.RegisterCustomEntity( "NS_GRENADEGUN::weapon_ns_grenadegun", "weapon_ns_grenadegun" );
-	g_ItemRegistry.RegisterWeapon( "weapon_ns_grenadegun", "ns", "ARgrenades" );	
+	g_ItemRegistry.RegisterWeapon( "weapon_ns_grenadegun", "ns", "ARgrenades", "", "ammo_ARgrenades" );
 }
 }
