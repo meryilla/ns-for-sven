@@ -48,8 +48,8 @@ array<string> SOUNDS = {
 
 //Anim timings
 const float flDeployTime = 1.1f;
-const float flReloadTime = 3.0;
-const float flReloadTimeEmpty = 3.5;
+const float RELOAD_TIME = 3.0;
+const float RELOAD_TIME_EMPTY = 3.37;
 
 //Item info
 const int MAX_AMMO = 250;
@@ -232,9 +232,9 @@ class weapon_ns_pistol : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 			return;
 			
 		if( self.m_iClip == 0 )
-			Reload( MAX_CLIP, RELOAD_EMPTY, flReloadTimeEmpty, GetBodygroup() );
+			Reload( MAX_CLIP, RELOAD_EMPTY, RELOAD_TIME_EMPTY, RELOAD_TIME_EMPTY, GetBodygroup() );
 		else
-			Reload( MAX_CLIP, RELOAD, flReloadTime, GetBodygroup() );
+			Reload( MAX_CLIP, RELOAD, RELOAD_TIME, RELOAD_TIME, GetBodygroup() );
 		
 		BaseClass.Reload();
 	}

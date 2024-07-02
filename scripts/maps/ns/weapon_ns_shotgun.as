@@ -57,10 +57,10 @@ array<string> SOUNDS = {
 };
 
 //Anim timings
-const float flDeployTime = 1.6f;
+const float flDeployTime = 1.55f;
 const float flGotoReloadTime = 0.8f;
 const float flReloadShellTime = 0.6f;
-const float flEndReloadTime = 1.4f;
+const float flEndReloadTime = 1.3f;
 
 //Item info
 const int MAX_AMMO = 40;

@@ -52,8 +52,9 @@ array<string> SOUNDS = {
 };
 
 //Anim timings
-const float DEPLOY_TIME = 1.1f;
-const float RELOAD_TIME = 7.5;
+const float DEPLOY_TIME = 1.05f;
+const float RELOAD_ANIM_TIME = 7.32;
+const float RELOAD_TIME = 6;
 
 //Item info
 const int MAX_AMMO = 250;
@@ -244,7 +245,7 @@ class weapon_ns_heavymachinegun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBa
 		if( self.m_iClip == MAX_CLIP || m_pPlayer.m_rgAmmo( self.m_iPrimaryAmmoType ) <= 0 )
 			return;			
 			
-		Reload( MAX_CLIP, RELOAD, RELOAD_TIME, GetBodygroup() );
+		Reload( MAX_CLIP, RELOAD, RELOAD_TIME, RELOAD_ANIM_TIME, GetBodygroup() );
 		
 		BaseClass.Reload();
 	}

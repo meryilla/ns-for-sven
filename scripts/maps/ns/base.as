@@ -35,11 +35,11 @@ mixin class WeaponBase
 		return true;
 	}	
 
-	void Reload( int iAmmo, int iAnim, float iTimer, int iBodygroup ) // things commonly executed in reloads
+	void Reload( int iAmmo, int iAnim, float flReloadTimer, float flAnimTimer, int iBodygroup ) // things commonly executed in reloads
 	{
 		self.m_fInReload = true;
-		self.DefaultReload( iAmmo, iAnim, iTimer, iBodygroup );
-		self.m_flTimeWeaponIdle = g_Engine.time + iTimer;
+		self.DefaultReload( iAmmo, iAnim, flReloadTimer, iBodygroup );
+		self.m_flTimeWeaponIdle = self.m_flNextPrimaryAttack = g_Engine.time + flAnimTimer;
 	}
 	
 	bool CommonPlayEmptySound( const string emptySound = szSoundEmpty ) // plays a empty sound when the player has no ammo left in the magazine

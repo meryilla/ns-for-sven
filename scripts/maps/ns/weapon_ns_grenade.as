@@ -52,9 +52,9 @@ array<string> GrenExplodeSounds =
 };
 
 //Anim timings
-const float DEPLOY_TIME = 0.85f;
-const float PRIME_TIME = 1.5f;
-const float GRENADE_THROW_TIME = 1.5f;
+const float DEPLOY_TIME = 0.8f;
+const float PRIME_TIME = 1.42f;
+const float GRENADE_THROW_TIME = 1.42f;
 
 //Item info
 const int MAX_AMMO = 5;
