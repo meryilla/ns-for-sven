@@ -69,8 +69,8 @@ class weapon_ns_mine : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 
 	private CBasePlayer@ m_pPlayer
 	{
-		get const 	{ return cast<CBasePlayer@>( self.m_hPlayer.GetEntity() ); }
-		set       	{ self.m_hPlayer = EHandle( @value ); }
+		get const	{ return cast<CBasePlayer@>( self.m_hPlayer.GetEntity() ); }
+		set			{ self.m_hPlayer = EHandle( @value ); }
 	}
 	private int GetBodygroup()
 	{
@@ -91,6 +91,9 @@ class weapon_ns_mine : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 		g_Game.PrecacheModel( MODEL_V );
 		g_Game.PrecacheModel( MODEL_W );
 		g_Game.PrecacheModel( MODEL_W2 );
+		
+		//Precache the mine we will be spawning
+		g_Game.PrecacheOther( "monster_ns_mine" );	
 		
 		for( uint i = 0; i < SOUNDS.length(); i++ )
 		{

@@ -256,7 +256,7 @@ class monster_onos : ScriptBaseMonsterEntity
 			{	
 				if( self.HasConditions( bits_COND_ENEMY_DEAD ) )
 				{
-					return BaseClass.GetSchedule();	
+					return BaseClass.GetSchedule();
 				}
 			
 				if( self.HasConditions( bits_COND_HEAVY_DAMAGE ) )
@@ -342,7 +342,6 @@ class monster_onos : ScriptBaseMonsterEntity
 	void MonsterThink()
 	{
 		BaseClass.Think();
-		
 		if( @self.m_pSchedule is BaseClass.GetScheduleOfType( SCHED_CHASE_ENEMY ) && m_flNextStompAttack < g_Engine.time )
 		{
 			CBaseEntity@ pEnemy = cast<CBaseEntity@>( self.m_hEnemy.GetEntity() );
@@ -451,7 +450,13 @@ class monster_onos : ScriptBaseMonsterEntity
 		}	
 		
 		return BaseClass.TakeDamage( pevInflictor, pevAttacker, flDamage, bitsDamageType );
-	}	
+	}
+
+	//Apparently stops the hardcoded fear mechanic?
+	int IgnoreConditions()
+	{
+		return bits_COND_SEE_FEAR;
+	}
 
 }
 

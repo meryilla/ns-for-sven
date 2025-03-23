@@ -263,7 +263,7 @@ class monster_fade : ScriptBaseMonsterEntity
 						break;
 					case 2:
 						szAttackSound = FADE_SOUND_ATTACK3;
-						break;					
+						break;
 				}
 				
 				g_SoundSystem.EmitSoundDyn( self.edict(), CHAN_WEAPON, szAttackSound, 1.0, ATTN_NORM, 0, 95 + Math.RandomLong( 0, 10 ) );
@@ -604,6 +604,12 @@ class monster_fade : ScriptBaseMonsterEntity
 		
 		return BaseClass.TakeDamage( pevInflictor, pevAttacker, flDamage, bitsDamageType );
 	}
+
+	//Apparently stops the hardcoded fear mechanic?
+	int IgnoreConditions()
+	{
+		return bits_COND_SEE_FEAR;
+	}	
 
 	float GetPointsForDamage( float flDamage )
 	{
