@@ -321,7 +321,7 @@ class monster_gorge : ScriptBaseMonsterEntity
 				if( CanBuild() )
 				{
 					return slGorgeBuild;
-				}				
+				}
 			
 				if( self.HasConditions( bits_COND_CAN_RANGE_ATTACK1 ) )
 				{
@@ -332,10 +332,10 @@ class monster_gorge : ScriptBaseMonsterEntity
 				if( CanHeal() )
 				{
 					return slGorgeHeal;
-				}								
+				}
 				else
 					return BaseClass.GetSchedule();
-			}			
+			}
 		}
 		return BaseClass.GetSchedule();
 	}

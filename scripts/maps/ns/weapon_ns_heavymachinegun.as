@@ -76,8 +76,8 @@ class weapon_ns_heavymachinegun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBa
 {
 	private CBasePlayer@ m_pPlayer
 	{
-		get const 	{ return cast<CBasePlayer@>( self.m_hPlayer.GetEntity() ); }
-		set       	{ self.m_hPlayer = EHandle( @value ); }
+		get const	{ return cast<CBasePlayer@>( self.m_hPlayer.GetEntity() ); }
+		set			{ self.m_hPlayer = EHandle( @value ); }
 	}
 	private int GetBodygroup()
 	{

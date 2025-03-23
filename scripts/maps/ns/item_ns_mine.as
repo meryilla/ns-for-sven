@@ -29,7 +29,7 @@ array<string> SOUNDS = {
 	SND_STEP,
 };
 
-array<string> MineExplodeSounds =
+array<string> SND_MINE_EXPLODE =
 {
 	"ns/weapons/explode3.wav",
 	"ns/weapons/explode4.wav",
@@ -65,7 +65,6 @@ class CNSMine : ScriptBaseMonsterEntity
 		
 		self.pev.movetype = MOVETYPE_FLY;
 		self.pev.solid = SOLID_NOT;
-		self.pev.targetname = "foobar";
 		
 		g_EntityFuncs.SetModel( self, MODEL_W );
 		g_EntityFuncs.SetOrigin( self, self.pev.origin );
@@ -101,10 +100,10 @@ class CNSMine : ScriptBaseMonsterEntity
 			g_Game.PrecacheGeneric( "sound/" + SOUNDS[i] );
 		}
 		
-		for( uint j = 0; j < MineExplodeSounds.length(); j++ )
+		for( uint j = 0; j < SND_MINE_EXPLODE.length(); j++ )
 		{
-			g_SoundSystem.PrecacheSound( MineExplodeSounds[j] );
-			g_Game.PrecacheGeneric( "sound/" + MineExplodeSounds[j] );
+			g_SoundSystem.PrecacheSound( SND_MINE_EXPLODE[j] );
+			g_Game.PrecacheGeneric( "sound/" + SND_MINE_EXPLODE[j] );
 		}
 		
 		//Sprites
@@ -253,7 +252,7 @@ class CNSMine : ScriptBaseMonsterEntity
 		GetSoundEntInstance().InsertSound( bits_SOUND_COMBAT, self.pev.origin, NORMAL_EXPLOSION_VOLUME, 3, self );
 		
 		g_WeaponFuncs.RadiusDamage( self.GetOrigin(), self.pev, m_pevPlacer, flDamage, flDamage * 2, CLASS_NONE, DMG_BLAST );
-		g_SoundSystem.EmitSoundDyn( self.edict(), CHAN_AUTO, MineExplodeSounds[ Math.RandomLong( 0, MineExplodeSounds.length() - 1 )], VOL_NORM, 0.4, 0, PITCH_NORM );
+		g_SoundSystem.EmitSoundDyn( self.edict(), CHAN_AUTO, SND_MINE_EXPLODE[ Math.RandomLong( 0, SND_MINE_EXPLODE.length() - 1 )], VOL_NORM, 0.4, 0, PITCH_NORM );
 		// Play view shake here
 		float flShakeAmplitude = 80;
 		float flShakeFrequency = 100;

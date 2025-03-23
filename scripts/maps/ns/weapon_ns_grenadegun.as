@@ -78,13 +78,10 @@ array<string> SND_GREN_EXPLODE_ARR =
 
 //Anim timings
 const float DEPLOY_TIME = 1.45f;
-const float RELOAD_TIME = 7.5;
-
-const float flDeployTime = 1.2f;
-const float flGotoReloadTime = 0.8f;
-const float flReloadShellTime = 1.1f;
-const float flEndReloadTime = 1.0f;
-const float flCancelReloadTime = 1.35f;
+const float GO_TO_RELOAD_TIME = 0.8f;
+const float RELOAD_SHELL_TIME = 1.1f;
+const float END_RELOAD_TIME = 1.0f;
+const float CANCEL_RELOAD_TIME = 1.35f;
 
 //Item info
 const int MAX_AMMO = 32;
@@ -95,7 +92,7 @@ const int DEFAULT_AMMO = MAX_CLIP;
 
 //Stats
 const int DAMAGE = 125;
-const int iRange = 2000;
+const int RANGE = 2000;
 //const float ROF = 1.2;
 const float ROF = 0.6;
 const float	XPUNCH = 2;
@@ -109,8 +106,8 @@ class weapon_ns_grenadegun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 {
 	private CBasePlayer@ m_pPlayer
 	{
-		get const 	{ return cast<CBasePlayer@>( self.m_hPlayer.GetEntity() ); }
-		set       	{ self.m_hPlayer = EHandle( @value ); }
+		get const	{ return cast<CBasePlayer@>( self.m_hPlayer.GetEntity() ); }
+		set			{ self.m_hPlayer = EHandle( @value ); }
 	}
 	private int GetBodygroup()
 	{
@@ -382,14 +379,14 @@ class weapon_ns_grenadegun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 				if( self.m_iClip == 2 || self.m_iClip == 3 )
 				{
 					self.SendWeaponAnim( CANCEL_RELOAD_2OR3, 0, GetBodygroup() );
-					self.m_flTimeWeaponIdle = g_Engine.time + flCancelReloadTime;
+					self.m_flTimeWeaponIdle = g_Engine.time + CANCEL_RELOAD_TIME;
 					self.m_flNextPrimaryAttack = self.m_flNextSecondaryAttack = self.m_flNextTertiaryAttack = g_Engine.time + ROF;
 					mSpecialReload = kSpecialReloadNone;					
 				}
 				else if( self.m_iClip == 1 )
 				{
 					self.SendWeaponAnim( CANCEL_RELOAD_1, 0, GetBodygroup() );
-					self.m_flTimeWeaponIdle = g_Engine.time + flCancelReloadTime;
+					self.m_flTimeWeaponIdle = g_Engine.time + CANCEL_RELOAD_TIME;
 					self.m_flNextPrimaryAttack = self.m_flNextSecondaryAttack = self.m_flNextTertiaryAttack = g_Engine.time + ROF;
 					mSpecialReload = kSpecialReloadNone;					
 				}
@@ -429,9 +426,9 @@ class weapon_ns_grenadegun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 	
 					self.SendWeaponAnim( GetReloadAnimation(), 0, GetBodygroup() );
 	
-					//m_pPlayer.m_flNextAttack = g_Engine.time + flGotoReloadTime;
-					m_flNextReload = g_Engine.time + flGotoReloadTime;
-					self.m_flTimeWeaponIdle = self.m_flNextPrimaryAttack = self.m_flNextSecondaryAttack = g_Engine.time + flGotoReloadTime;
+					//m_pPlayer.m_flNextAttack = g_Engine.time + GO_TO_RELOAD_TIME;
+					m_flNextReload = g_Engine.time + GO_TO_RELOAD_TIME;
+					self.m_flTimeWeaponIdle = self.m_flNextPrimaryAttack = self.m_flNextSecondaryAttack = g_Engine.time + GO_TO_RELOAD_TIME;
 				
 				}
 				else if( mSpecialReload == kSpecialReloadGotoReload )
@@ -441,8 +438,8 @@ class weapon_ns_grenadegun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 						// was waiting for gun to move to side
 						mSpecialReload = kSpecialReloadReloadShell;
 						//self.SendWeaponAnim( RELOAD, 0, GetBodygroup() );
-						m_flNextReload = g_Engine.time + flReloadShellTime;
-						self.m_flTimeWeaponIdle = self.m_flNextPrimaryAttack = self.m_flNextSecondaryAttack = g_Engine.time + flReloadShellTime;
+						m_flNextReload = g_Engine.time + RELOAD_SHELL_TIME;
+						self.m_flTimeWeaponIdle = self.m_flNextPrimaryAttack = self.m_flNextSecondaryAttack = g_Engine.time + RELOAD_SHELL_TIME;
 					}
 				}
 				else if( mSpecialReload == kSpecialReloadReloadShell )
@@ -484,7 +481,7 @@ class weapon_ns_grenadegun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 					mSpecialReload = kSpecialReloadNone;
 		
 					//self.SendWeaponAnim( END_RELOAD, 0, GetBodygroup() );
-					self.m_flTimeWeaponIdle = g_Engine.time + flEndReloadTime;
+					self.m_flTimeWeaponIdle = g_Engine.time + END_RELOAD_TIME;
 				}
 			}
 			else
@@ -501,6 +498,7 @@ class weapon_ns_grenadegun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 }
 void Register()
 {
+	NS_PROJ_GRENADE::Register();
 	g_CustomEntityFuncs.RegisterCustomEntity( "NS_GRENADEGUN::weapon_ns_grenadegun", "weapon_ns_grenadegun" );
 	g_ItemRegistry.RegisterWeapon( "weapon_ns_grenadegun", "ns", "ARgrenades", "", "ammo_ARgrenades" );
 }

@@ -50,12 +50,12 @@ If you are considering using this for your map I assume you already know how to 
 void MapInit()
 {
 	NS_KNIFE::Register();
-    NS_PISTOL::Register();
+	NS_PISTOL::Register();
 	NS_MACHINEGUN::Register();
 	NS_SHOTGUN::Register();
 	NS_HEAVYMACHINEGUN::Register();
 	NS_GRENADEGUN::Register();
-    NS_MINE::Register();
+	NS_MINE::Register();
 	NS_GRENADE::Register();
 
 	NS_SKULK::Register();

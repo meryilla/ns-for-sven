@@ -44,7 +44,7 @@ array<string> SOUNDS = {
 	SND_THROW
 };
 
-array<string> GrenExplodeSounds =
+array<string> SND_GREN_EXPLODE =
 {
 	"ns/weapons/explode3.wav",
 	"ns/weapons/explode4.wav",
@@ -85,8 +85,8 @@ class weapon_ns_grenade : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 {
 	private CBasePlayer@ m_pPlayer
 	{
-		get const 	{ return cast<CBasePlayer@>( self.m_hPlayer.GetEntity() ); }
-		set       	{ self.m_hPlayer = EHandle( @value ); }
+		get const	{ return cast<CBasePlayer@>( self.m_hPlayer.GetEntity() ); }
+		set			{ self.m_hPlayer = EHandle( @value ); }
 	}
 	private bool m_blInAttack, m_blThrown;
 	private float m_flReleaseThrow, m_flStartThrow;
@@ -130,9 +130,9 @@ class weapon_ns_grenade : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 		//g_SoundSystem.PrecacheSound( BOUNCE_SOUND2 );
 		//g_SoundSystem.PrecacheSound( BOUNCE_SOUND3 );	
 //
-		//for( uint i = 0; i < GrenExplodeSounds.length(); i++ )
+		//for( uint i = 0; i < SND_GREN_EXPLODE.length(); i++ )
 		//{
-		//	g_SoundSystem.PrecacheSound( GrenExplodeSounds[i] );
+		//	g_SoundSystem.PrecacheSound( SND_GREN_EXPLODE[i] );
 		//}
 		
 		CommonPrecache();

@@ -34,33 +34,33 @@ enum reload_status
 };
 
 //Models
-const string szModelP = "models/ns/p_sg.mdl";
-const string szModelV = "models/ns/v_sg.mdl";
-const string szModelW = "models/ns/w_sg.mdl";
-const string szShell = "models/ns/shotshell.mdl";
+const string MODEL_P = "models/ns/p_sg.mdl";
+const string MODEL_V = "models/ns/v_sg.mdl";
+const string MODEL_W = "models/ns/w_sg.mdl";
+const string MODEL_SHELL = "models/ns/shotshell.mdl";
 
 //Sounds
-const string szSoundPrimaryFire = "ns/weapons/sg/sg-1.wav";
-const string szSoundReload = "ns/weapons/sg/shotgun_reload.wav";
-const string szSoundDraw = "ns/weapons/sg/shotgun_draw.wav";
-const string szSoundPump = "ns/weapons/sg/shotgun_pump.wav";
-const string szSoundCock = "ns/weapons/sg/sg-cock.wav";
-const string szSoundStockRelease = "ns/weapons/sg/shotgun_stock_release.wav";
+const string SND_FIRE = "ns/weapons/sg/sg-1.wav";
+const string SND_RELOAD = "ns/weapons/sg/shotgun_reload.wav";
+const string SND_DRAW = "ns/weapons/sg/shotgun_draw.wav";
+const string SND_PUMP = "ns/weapons/sg/shotgun_pump.wav";
+const string SND_COCK = "ns/weapons/sg/sg-cock.wav";
+const string SND_STOCK_RELEASE = "ns/weapons/sg/shotgun_stock_release.wav";
 
 array<string> SOUNDS = {
-	szSoundPrimaryFire,
-	szSoundReload,
-	szSoundDraw,
-	szSoundPump,
-	szSoundCock,
-	szSoundStockRelease
+	SND_FIRE,
+	SND_RELOAD,
+	SND_DRAW,
+	SND_PUMP,
+	SND_COCK,
+	SND_STOCK_RELEASE
 };
 
 //Anim timings
-const float flDeployTime = 1.55f;
-const float flGotoReloadTime = 0.8f;
-const float flReloadShellTime = 0.6f;
-const float flEndReloadTime = 1.3f;
+const float DEPLOY_TIME = 1.55f;
+const float GO_TO_RELOAD_TIME = 0.8f;
+const float RELOAD_SHELL_TIME = 0.6f;
+const float END_RELOAD_TIME = 1.3f;
 
 //Item info
 const int MAX_AMMO = 40;
@@ -70,24 +70,20 @@ const int iPosition = 20;
 const int iDefaultAmmo = MAX_CLIP;
 
 //Stats
-const int iBulletsPerShot = 10;
-const int iDamage = 10;
-const int iRange = 4096;
-//const float flROF = 1.3;
-const float flROF = 0.6;
-const float flReloadTime = .22f;
-const float	flXPunch = 5;
-const int iBarrelLength = 25;
-const Vector vecSpread = VECTOR_CONE_20DEGREES;
-const Vector vecMidSpread = VECTOR_CONE_8DEGREES;
-const Vector vecInnerSpread = VECTOR_CONE_3DEGREES;
+const int BULLETS_PER_SHOT = 10;
+const int DAMAGE = 10;
+const int RANGE = 4096;
+//const float ROF = 1.3;
+const float ROF = 0.6;
+const float	XPUNCH = 5;
+const Vector SPREAD = VECTOR_CONE_8DEGREES;
 
 class weapon_ns_shotgun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 {
 	private CBasePlayer@ m_pPlayer
 	{
-		get const 	{ return cast<CBasePlayer@>( self.m_hPlayer.GetEntity() ); }
-		set       	{ self.m_hPlayer = EHandle( @value ); }
+		get const	{ return cast<CBasePlayer@>( self.m_hPlayer.GetEntity() ); }
+		set			{ self.m_hPlayer = EHandle( @value ); }
 	}
 	private int GetBodygroup()
 	{
@@ -102,16 +98,16 @@ class weapon_ns_shotgun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 	{
 		Precache();
 		self.m_iDefaultAmmo = iDefaultAmmo;
-		g_EntityFuncs.SetModel( self, szModelW );		
+		g_EntityFuncs.SetModel( self, MODEL_W );		
 		self.FallInit();
 	}
 
 	void Precache()
 	{
-		g_Game.PrecacheModel( szModelP );
-		g_Game.PrecacheModel( szModelV );
-		g_Game.PrecacheModel( szModelW );
-		m_iShell = g_Game.PrecacheModel( szShell );
+		g_Game.PrecacheModel( MODEL_P );
+		g_Game.PrecacheModel( MODEL_V );
+		g_Game.PrecacheModel( MODEL_W );
+		m_iShell = g_Game.PrecacheModel( MODEL_SHELL );
 		
 		for( uint i = 0; i < SOUNDS.length(); i++ )
 		{
@@ -155,7 +151,7 @@ class weapon_ns_shotgun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 	
 	bool Deploy()
 	{	
-		return Deploy( szModelV, szModelP, DRAW, "shotgun", GetBodygroup(), flDeployTime );
+		return Deploy( MODEL_V, MODEL_P, DRAW, "shotgun", GetBodygroup(), DEPLOY_TIME );
 	}
 
 	void Holster( int skipLocal = 0 )
@@ -167,7 +163,7 @@ class weapon_ns_shotgun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 	
 	Vector GetProjectileSpread()
 	{
-		return vecMidSpread;
+		return SPREAD;
 	}
 	
 	int	GetIdleAnimation()
@@ -199,9 +195,9 @@ class weapon_ns_shotgun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 		Vector vecAiming = m_pPlayer.GetAutoaimVector( AUTOAIM_5DEGREES );
 		
 		// Fire the bullets and apply damage
-		m_pPlayer.FireBullets( iBulletsPerShot, vecSrc, vecAiming, GetProjectileSpread(), iRange, BULLET_PLAYER_CUSTOMDAMAGE, 0, iDamage );
+		m_pPlayer.FireBullets( BULLETS_PER_SHOT, vecSrc, vecAiming, GetProjectileSpread(), RANGE, BULLET_PLAYER_CUSTOMDAMAGE, 0, DAMAGE );
 		
-		ShootWeapon( vecSrc, vecAiming, iBulletsPerShot, GetProjectileSpread(), 4096, iDamage, false, DMG_BULLET | DMG_NEVERGIB );
+		ShootWeapon( vecSrc, vecAiming, BULLETS_PER_SHOT, GetProjectileSpread(), 4096, DAMAGE, false, DMG_BULLET | DMG_NEVERGIB );
 	}	
 	
 	
@@ -210,7 +206,7 @@ class weapon_ns_shotgun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 		if( m_pPlayer.pev.waterlevel == 3 )
 		{
 			self.PlayEmptySound();
-			self.m_flNextPrimaryAttack = g_Engine.time + flROF;
+			self.m_flNextPrimaryAttack = g_Engine.time + ROF;
 			return;
 		}
 
@@ -218,7 +214,7 @@ class weapon_ns_shotgun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 		{
 			self.PlayEmptySound();
 			self.SendWeaponAnim( SHOOT_EMPTY, 0, GetBodygroup() );
-			self.m_flNextPrimaryAttack = g_Engine.time + flROF;
+			self.m_flNextPrimaryAttack = g_Engine.time + ROF;
 			return;
 		}
 		
@@ -231,15 +227,15 @@ class weapon_ns_shotgun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 		
 		m_pPlayer.SetAnimation( PLAYER_ATTACK1 );
 		self.SendWeaponAnim( SHOOT, 0, GetBodygroup() );
-		g_SoundSystem.EmitSoundDyn( m_pPlayer.edict(), CHAN_WEAPON, szSoundPrimaryFire, Math.RandomFloat( 0.95, 1.0 ), 0.8, 0, 94 + Math.RandomLong( 0, 0xf ) );
+		g_SoundSystem.EmitSoundDyn( m_pPlayer.edict(), CHAN_WEAPON, SND_FIRE, Math.RandomFloat( 0.95, 1.0 ), 0.8, 0, 94 + Math.RandomLong( 0, 0xf ) );
 		
 		FireProjectiles();
 		
-		m_pPlayer.pev.punchangle.x = Math.RandomFloat( -flXPunch, flXPunch);
+		m_pPlayer.pev.punchangle.x = Math.RandomFloat( -XPUNCH, XPUNCH);
 		
 		ShellEject( m_pPlayer, m_iShell, Vector( 15, 8, -4 ), TE_BOUNCE_SHOTSHELL );
 		
-		self.m_flNextPrimaryAttack = self.m_flNextSecondaryAttack = g_Engine.time + flROF;
+		self.m_flNextPrimaryAttack = self.m_flNextSecondaryAttack = g_Engine.time + ROF;
 		self.m_flTimeWeaponIdle = g_Engine.time + g_PlayerFuncs.SharedRandomLong( m_pPlayer.random_seed, 10, 15 );		
 			
 
@@ -254,8 +250,8 @@ class weapon_ns_shotgun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 			{
 				self.SendWeaponAnim( END_RELOAD, 0, GetBodygroup() );
 
-				self.m_flTimeWeaponIdle = g_Engine.time + flEndReloadTime;
-				self.m_flNextPrimaryAttack = self.m_flNextSecondaryAttack = self.m_flNextTertiaryAttack = g_Engine.time + flROF;
+				self.m_flTimeWeaponIdle = g_Engine.time + END_RELOAD_TIME;
+				self.m_flNextPrimaryAttack = self.m_flNextSecondaryAttack = self.m_flNextTertiaryAttack = g_Engine.time + ROF;
 				mSpecialReload = kSpecialReloadNone;
 			}
 		}
@@ -283,9 +279,9 @@ class weapon_ns_shotgun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 	
 					self.SendWeaponAnim( GOTO_RELOAD, 0, GetBodygroup() );
 	
-					//m_pPlayer.m_flNextAttack = g_Engine.time + flGotoReloadTime;
-					m_flNextReload = g_Engine.time + flGotoReloadTime;
-					self.m_flTimeWeaponIdle = self.m_flNextPrimaryAttack = self.m_flNextSecondaryAttack = g_Engine.time + flGotoReloadTime;
+					//m_pPlayer.m_flNextAttack = g_Engine.time + GO_TO_RELOAD_TIME;
+					m_flNextReload = g_Engine.time + GO_TO_RELOAD_TIME;
+					self.m_flTimeWeaponIdle = self.m_flNextPrimaryAttack = self.m_flNextSecondaryAttack = g_Engine.time + GO_TO_RELOAD_TIME;
 				
 				}
 				else if( mSpecialReload == kSpecialReloadGotoReload )
@@ -295,8 +291,8 @@ class weapon_ns_shotgun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 						// was waiting for gun to move to side
 						mSpecialReload = kSpecialReloadReloadShell;
 						self.SendWeaponAnim( RELOAD, 0, GetBodygroup() );
-						m_flNextReload = g_Engine.time + flReloadShellTime;
-						self.m_flTimeWeaponIdle = self.m_flNextPrimaryAttack = self.m_flNextSecondaryAttack = g_Engine.time + flReloadShellTime;
+						m_flNextReload = g_Engine.time + RELOAD_SHELL_TIME;
+						self.m_flTimeWeaponIdle = self.m_flNextPrimaryAttack = self.m_flNextSecondaryAttack = g_Engine.time + RELOAD_SHELL_TIME;
 					}
 				}
 				else if( mSpecialReload == kSpecialReloadReloadShell )
@@ -338,7 +334,7 @@ class weapon_ns_shotgun : ScriptBasePlayerWeaponEntity, NSBASE::WeaponBase
 					mSpecialReload = kSpecialReloadNone;
 		
 					self.SendWeaponAnim( END_RELOAD, 0, GetBodygroup() );
-					self.m_flTimeWeaponIdle = g_Engine.time + flEndReloadTime;
+					self.m_flTimeWeaponIdle = g_Engine.time + END_RELOAD_TIME;
 				}
 			}
 			else
