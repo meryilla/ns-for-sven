@@ -192,7 +192,7 @@ class CAlienTurret : ScriptBaseMonsterEntity, NS_BASE_TURRET::TurretBase
 		pSpike.pev.angles = Math.VecToAngles( vecDirToEnemy );
 
 		// Play attack anim
-		PlayAnimationAtIndex( 6, true );
+		PlayAnimationAtIndex( FIRE, true );
 
 		//Uncloak();
 	}
@@ -229,6 +229,11 @@ class CAlienTurret : ScriptBaseMonsterEntity, NS_BASE_TURRET::TurretBase
 	{
 		return true;
 	}
+
+	bool HasDeathAnim()
+	{
+		return false;
+	}		
 
 	float GetRateOfFire() const
 	{
@@ -275,6 +280,11 @@ class CAlienTurret : ScriptBaseMonsterEntity, NS_BASE_TURRET::TurretBase
 		return 1000;
 	}
 
+	int	GetMinXYRange()
+	{
+		return 0;
+	}	
+
 	string GetKilledSound()
 	{
 		return SOUND_DEATH;
@@ -293,11 +303,11 @@ class CAlienTurret : ScriptBaseMonsterEntity, NS_BASE_TURRET::TurretBase
 		{
 			if( Math.RandomLong( 0, 5 ) == 0)
 			{
-				iAnim = 4;
+				iAnim = RESEARCHING;
 			}
 			else
 			{
-				iAnim = 2;
+				iAnim = IDLE1;
 			}
 		}
 		
@@ -310,7 +320,7 @@ class CAlienTurret : ScriptBaseMonsterEntity, NS_BASE_TURRET::TurretBase
 		
 		if( m_blIsBuilt )
 		{
-			iAnim = 3;
+			iAnim = IDLE2;
 		}
 		
 		return iAnim;

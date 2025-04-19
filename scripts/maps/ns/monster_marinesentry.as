@@ -37,7 +37,7 @@ array<string> SOUNDS = {
 	SOUND_PING,
 	SOUND_DEATH1,
 	SOUND_DEATH2,
-	SOUND_DEATH3,
+	SOUND_DEATH3
 };
 
 //Stats
@@ -62,7 +62,7 @@ class CMarineSentry : ScriptBaseMonsterEntity, NS_BASE_TURRET::TurretBase
 	private bool m_blPersistent = false;
 
 	private int m_iModelIndex;
-	
+
 	void Precache()
 	{
 		m_iModelIndex = g_Game.PrecacheModel( MODEL );
@@ -79,7 +79,7 @@ class CMarineSentry : ScriptBaseMonsterEntity, NS_BASE_TURRET::TurretBase
 		g_EntityFuncs.SetModel( self, MODEL );
 
 		self.pev.movetype = MOVETYPE_TOSS;
-		self.pev.solid = SOLID_SLIDEBOX;   
+		self.pev.solid = SOLID_SLIDEBOX;
 		self.m_bloodColor = DONT_BLEED;
 
 		g_EntityFuncs.SetSize( self.pev, Vector( -16, -16, 0 ), Vector( 16.0, 16.0, 42.0 ) );
@@ -87,16 +87,16 @@ class CMarineSentry : ScriptBaseMonsterEntity, NS_BASE_TURRET::TurretBase
 		//TODO Health from keyvalue or cvar?
 		if( self.pev.health == 0 )
 			self.pev.health = SENTRY_HEALTH;
-		self.pev.max_health = self.pev.health;      
+		self.pev.max_health = self.pev.health;
 
-		PlayAnimationAtIndex( DEPLOY, true, 0.2f ); 
-				
+		PlayAnimationAtIndex( DEPLOY, true, 0.2f );
+
 		m_flBuildEndTime = g_Engine.time + ( GetTimeForAnimation( self.pev.sequence ) / self.pev.framerate );
 		Setup();
 
 		SetThink( ThinkFunction( PreBuiltThink ) );
 		self.pev.nextthink = g_Engine.time + 0.5f;
-		
+
 		g_SoundSystem.EmitSound( self.edict(), CHAN_AUTO, SOUND_DEPLOY, 1.0, ATTN_IDLE );
 
 		//hardcoding whether entities are healable or not by classname is dumb af
@@ -108,11 +108,11 @@ class CMarineSentry : ScriptBaseMonsterEntity, NS_BASE_TURRET::TurretBase
 		// player ally override
 		if( self.IsPlayerAlly() )
 			return CLASS_PLAYER_ALLY;
-		
+
 		// allow custom monster classifications
 		if( self.m_fOverrideClass )
 			return self.m_iClassSelection;
-		
+
 		// default
 		return CLASS_MACHINE;
 	}
@@ -124,9 +124,9 @@ class CMarineSentry : ScriptBaseMonsterEntity, NS_BASE_TURRET::TurretBase
 			m_blIsBuilt = true;
 			SetEnabledState();
 		}
-		
+
 		self.pev.nextthink = g_Engine.time + 0.1f;
-	}       
+	}
 
 	void Killed( entvars_t@ pevAttacker, int iGib )
 	{
@@ -139,9 +139,9 @@ class CMarineSentry : ScriptBaseMonsterEntity, NS_BASE_TURRET::TurretBase
 		Vector vecDirToEnemy = vecToEnemy.Normalize();
 		//Use BULLET_PLAYER_CUSTOMDAMAGE because other bullet types have DMG_ALWAYSGIB for some reason
 		self.FireBullets( 1, vecOrigin, vecDirToEnemy, VECTOR_CONE_3DEGREES, GetXYRange(), BULLET_PLAYER_CUSTOMDAMAGE, 1, SENTRY_DMG, self.pev );
-		
+
 		g_SoundSystem.EmitSoundDyn( self.edict(), CHAN_WEAPON, SOUND_FIRE4, VOL_NORM, ATTN_NORM, 0, 94 + Math.RandomLong( 0, 0xF ) );
-		
+
 		self.pev.effects |= EF_MUZZLEFLASH;
 
 		//TODO: Smoke/sprites
@@ -157,18 +157,23 @@ class CMarineSentry : ScriptBaseMonsterEntity, NS_BASE_TURRET::TurretBase
 	int MoveTurret()
 	{
 		return BaseMoveTurret();
-	}        
+	}
 
 	float GetPointsForDamage( float flDamage )
 	{
 		//return ( flDamage/self.pev.max_health ) * ( 3 * ( self.pev.max_health/sk_marinesentry_health.value ) );
 		return ( flDamage/self.pev.max_health ) * ( 4 );
-	}    
+	}
 
 	bool GetIsOrganic()
 	{
 		return false;
 	}
+
+	bool HasDeathAnim()
+	{
+		return true;
+	}	
 
 	bool IsMachine()
 	{
@@ -181,12 +186,17 @@ class CMarineSentry : ScriptBaseMonsterEntity, NS_BASE_TURRET::TurretBase
 		//float flBaseROF = 0.7f;
 		float flBaseROF = 0.1f;
 		return flBaseROF + flVariance;
-	}     
+	}
 
 	int	GetXYRange()
 	{
-		return 1200;
+		return 1100;
 	}
+
+	int	GetMinXYRange()
+	{
+		return 0;
+	}	
 
 	string GetKilledSound()
 	{
@@ -205,20 +215,20 @@ class CMarineSentry : ScriptBaseMonsterEntity, NS_BASE_TURRET::TurretBase
 	string GetPingSound()
 	{
 		return SOUND_PING;
-	}        
+	}
 
 	int GetSetEnabledAnimation()
 	{
 		return 3;
-	}     
+	}
 
 	bool GetRequiresLOS()
 	{
 		return true;
-	}    
+	}
 
 	//AAAAAAAAAAAAAAAAAAAAAAAAAAA THIS IS SO DUMB WHY DOESN'T AS EXPOSE STUDIO MODEL FUNCS AHHHHHHHHHHHHHHHHHHHHH
-	float GetTimeForAnimation( int iIndex ) 
+	float GetTimeForAnimation( int iIndex )
 	{
 		switch( iIndex )
 		{
@@ -236,10 +246,10 @@ class CMarineSentry : ScriptBaseMonsterEntity, NS_BASE_TURRET::TurretBase
 				return (7.0f/5.0f);
 		}
 		return 0.0f;
-	}               
+	}
 }
 void Register()
 {
 	g_CustomEntityFuncs.RegisterCustomEntity( "NS_MARINE_SENTRY::CMarineSentry", "monster_marinesentry" );
-}    
+}
 }

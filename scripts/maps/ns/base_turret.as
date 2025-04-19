@@ -27,12 +27,16 @@ const float VERTICAL_FOV = 30.0f;
 
 //Models
 const string MODEL_DEATH_SPRITE = "sprites/ns/chamberdeath.spr";
+const string MODEL_GIBS = "models/computergibs.mdl";
 const string SMOKE_SPRITE = "sprites/steam1.spr";
+const string EXPLODE_SPRITE = "sprites/zerogxplode.spr";
 
 mixin class TurretBase
 {
 	protected float m_flTimeAnimationDone = 0;
 	protected int m_iLastAnimationPlayed = -1;
+
+	protected bool m_blIsDying = false;
 
 	protected float m_flTimeOfLastUpdateEnemy = -1;
 	protected float m_flTurnRate;
@@ -44,7 +48,9 @@ mixin class TurretBase
 	void CommonPrecache()
 	{
 		g_Game.PrecacheModel( MODEL_DEATH_SPRITE );
+		g_Game.PrecacheModel( MODEL_GIBS );
 		g_Game.PrecacheModel( SMOKE_SPRITE );
+		g_Game.PrecacheModel( EXPLODE_SPRITE );
 	}
 
 	void Setup()
@@ -74,7 +80,7 @@ mixin class TurretBase
 
 	//float GetTimeForAnimation( int iIndex ) 
 	//{
-	//    return GetSequenceDuration(GET_MODEL_PTR(ENT(pev)), this->pev);
+	//    return GetSequenceDuration(GET_MODEL_PTR(ENT(pev)), this.pev);
 	//}    
 
 	void SetEnabledState()
@@ -114,10 +120,6 @@ mixin class TurretBase
 			m_iLastAnimationPlayed = iIndex;
 			float flTimeForAnim = GetTimeForAnimation( iIndex );
 			m_flTimeAnimationDone = flCurrentTime + flTimeForAnim;
-			// Recalculate size
-			//Vector theMinSize, theMaxSize;
-			//this->ExtractBbox(this->pev->sequence, (float*)&theMinSize, (float*)&theMaxSize);
-			//UTIL_SetSize(this->pev, theMinSize, theMaxSize); 
 		}
 	}
 	void SearchThink()
@@ -152,7 +154,7 @@ mixin class TurretBase
 		// If we've found a target, spin up the barrel and start to attack
 		if( self.m_hEnemy )
 		{
-			//this->m_flSpinUpTime = 0;
+			//this.m_flSpinUpTime = 0;
 			SetThink( ThinkFunction( ActiveThink ) );
 		}
 
@@ -210,6 +212,7 @@ mixin class TurretBase
 		array<CBaseEntity@> theEntityList(100);
 		
 		int iMaxRange = GetXYRange();
+		int iMinRange = GetMinXYRange();
 		
 		Vector vecDelta = Vector( iMaxRange, iMaxRange, iMaxRange );
 		CBaseEntity@ pCurrentEntity, pBestEntity;
@@ -243,7 +246,7 @@ mixin class TurretBase
 
 				// Find nearest enemy
 				float flRangeToTarget = ( pCurrentEntity.pev.origin - self.pev.origin ).Length2D();
-				if( flRangeToTarget < flCurrentEntityRange)
+				if( flRangeToTarget < flCurrentEntityRange  && flRangeToTarget > iMinRange )
 				{
 					// FVisible is expensive, so defer until necessary
 					if( !GetRequiresLOS() || self.FVisible( pCurrentEntity, true ) )
@@ -269,12 +272,12 @@ mixin class TurretBase
 		{
 			// If enemy is in FOV
 			Vector vecMid = self.pev.origin + self.pev.view_ofs;
-			//AvHSUPlayParticleEvent("JetpackEffect", this->edict(), vecMid);
+			//AvHSUPlayParticleEvent("JetpackEffect", this.edict(), vecMid);
 
 			CBaseEntity@ pEnemyEntity = cast<CBaseEntity@>( self.m_hEnemy.GetEntity() );
 			Vector vecMidEnemy = pEnemyEntity.BodyTarget( vecMid );
 
-			//AvHSUPlayParticleEvent("JetpackEffect", vecMidEnemy->edict(), vecMidEnemy);
+			//AvHSUPlayParticleEvent("JetpackEffect", vecMidEnemy.edict(), vecMidEnemy);
 
 			// calculate dir and dist to enemy
 			Vector vecDirToEnemy = vecMidEnemy - vecMid;
@@ -357,7 +360,7 @@ mixin class TurretBase
 
 	int BaseMoveTurret()
 	{
-		//ASSERT(this->m_flTurnRate > 0);
+		//ASSERT(this.m_flTurnRate > 0);
 		// We have an enemy, track towards goal angles
 		if( self.m_hEnemy )
 		{
@@ -379,7 +382,7 @@ mixin class TurretBase
 		Vector vecAngles;
 		m_quatCur.GetAngles( vecAngles );
 
-		//SetBoneController(0, m_vecCurAngles.y - pev->angles.y );
+		//SetBoneController(0, m_vecCurAngles.y - pev.angles.y );
 		self.SetBoneController( 0, vecAngles.y - self.pev.angles.y );
 		self.SetBoneController( 1, -vecAngles.x );
 
@@ -390,13 +393,15 @@ mixin class TurretBase
 	void TurretKilled( entvars_t@ pevAttacker, int iGib )
 	{
 		//AvHBaseBuildable::SetHasBeenKilled();
-		//GetGameRules()->RemoveEntityUnderAttack( this->entindex() );
+		//GetGameRules().RemoveEntityUnderAttack( this.entindex() );
 
-		//this->mKilled = true;
-		//this->mInternalSetConstructionComplete = false;
-		//this->mTimeOfLastAutoHeal = -1;
+		//this.mKilled = true;
+		//this.mInternalSetConstructionComplete = false;
+		//this.mTimeOfLastAutoHeal = -1;
 
-		TriggerDeathAudioVisuals();
+		//Stops effects from running multiple times on top of each other when destroyed by explosives or shotguns
+		if( !m_blIsDying )
+			TriggerDeathAudioVisuals();
 		
 		if( !GetIsOrganic() )
 		{
@@ -413,12 +418,12 @@ mixin class TurretBase
 		//The below isn't necessary as we will make use of GetPointsForDamage instead for scoring
 		//if( pevAttacker !is null )
 		//{
-		//    const char* theClassName = STRING(this->pev->classname);
+		//    const char* theClassName = STRING(this.pev.classname);
 		//    AvHPlayer* inPlayer = dynamic_cast<AvHPlayer*>(CBaseEntity::Instance(ENT(pevAttacker)));
 		//    if(inPlayer && theClassName)
 		//    {
-		//        inPlayer->LogPlayerAction("structure_destroyed", theClassName);
-		//        GetGameRules()->RewardPlayerForKill(inPlayer, this);
+		//        inPlayer.LogPlayerAction("structure_destroyed", theClassName);
+		//        GetGameRules().RewardPlayerForKill(inPlayer, this);
 		//    }
 		//}
 		SetThink(null);
@@ -429,7 +434,7 @@ mixin class TurretBase
 		}
 		else
 		{
-			if( GetIsOrganic() )
+			if( !HasDeathAnim() )
 			{
 				//RIP
 				g_EntityFuncs.Remove( self );
@@ -472,11 +477,45 @@ mixin class TurretBase
 
 	void TriggerDeathAudioVisuals()
 	{
+		m_blIsDying = true;
 		if( GetIsOrganic() )
 		{
 			Vector vecDir = Vector( 0, 0, 5 );
-			te_spray(self.pev.origin, vecDir, MODEL_DEATH_SPRITE, 
-			15, 40, 120, 5);
+			te_spray( self.pev.origin, vecDir, MODEL_DEATH_SPRITE, 15, 40, 120, 5 );
+		}
+		else if( !HasDeathAnim() )
+		{
+			//If the model has no death animation, just do an explosion + gibs. Kind of lame but better than nothing
+			NetworkMessage explode( MSG_BROADCAST, NetworkMessages::SVC_TEMPENTITY );
+			explode.WriteByte( TE_EXPLOSION );
+			explode.WriteCoord( self.pev.origin.x);
+			explode.WriteCoord( self.pev.origin.y );
+			explode.WriteCoord( self.pev.origin.z );
+			explode.WriteShort( g_EngineFuncs.ModelIndex( EXPLODE_SPRITE ) );
+			explode.WriteByte( 10 ); //scale
+			explode.WriteByte( 15 ); //framerate
+			explode.WriteByte( 0 ); //flags
+			explode.End();
+
+			Vector vecSize = self.pev.maxs - self.pev.mins;
+
+			NetworkMessage gibs( MSG_BROADCAST, NetworkMessages::SVC_TEMPENTITY );
+			gibs.WriteByte( TE_BREAKMODEL );
+			gibs.WriteCoord( self.pev.origin.x );
+			gibs.WriteCoord( self.pev.origin.y );
+			gibs.WriteCoord( self.pev.origin.z + 20 );
+			gibs.WriteCoord( vecSize.x );
+			gibs.WriteCoord( vecSize.y );
+			gibs.WriteCoord( vecSize.z );
+			gibs.WriteCoord( 0 ); //velocity x, y, and z
+			gibs.WriteCoord( 0 );
+			gibs.WriteCoord( 0 );
+			gibs.WriteByte( 16 ); //speedNoise
+			gibs.WriteShort( g_EngineFuncs.ModelIndex( MODEL_GIBS ) );
+			gibs.WriteByte( 8 ); //count
+			gibs.WriteByte( 8 ); //life
+			gibs.WriteByte( 2 ); //flags
+			gibs.End();
 		}
 		else
 		{
@@ -486,7 +525,7 @@ mixin class TurretBase
 			smoke.WriteCoord( Math.RandomFloat( self.pev.absmin.x, self.pev.absmax.x ) );
 			smoke.WriteCoord( Math.RandomFloat( self.pev.absmin.y, self.pev.absmax.y ) );
 			smoke.WriteCoord( Math.RandomFloat( self.pev.absmin.z, self.pev.absmax.z ) );
-			smoke.WriteShort( g_EngineFuncs.ModelIndex(SMOKE_SPRITE) );
+			smoke.WriteShort( g_EngineFuncs.ModelIndex( SMOKE_SPRITE ) );
 			smoke.WriteByte( 15 ); // scale * 10
 			smoke.WriteByte( 8 ); // framerate
 			smoke.End();
@@ -529,5 +568,81 @@ mixin class TurretBase
 	{
 		return 1;
 	}
+
+	//HLSDK implementation of RadiusDamage, plus some tweaks to ensure turrets can't hurt themselves or friendlies
+	void RadiusDamage( Vector vecSrc, entvars_t@ pevInflictor, entvars_t@ pevAttacker, float flDamage, float flRadius, int iClassIgnore, int bitsDamageType )
+	{
+		CBaseEntity@ pEntity;
+		TraceResult	tr;
+		float flAdjustedDamage, falloff;
+		Vector vecSpot;
+
+		if ( flRadius > 0 )
+			falloff = flDamage / flRadius;
+		else
+			falloff = 1.0;
+
+		bool bInWater = ( g_EngineFuncs.PointContents( vecSrc ) == CONTENTS_WATER );
+
+		vecSrc.z += 1; // in case grenade is lying on the ground
+
+		if ( pevAttacker is null )
+			@pevAttacker = @pevInflictor;
+
+		// iterate on all entities in the vicinity.
+		while( ( @pEntity = g_EntityFuncs.FindEntityInSphere( pEntity, vecSrc, flRadius, "*", "classname" ) ) != null )
+		{
+			if ( pEntity.pev.takedamage != DAMAGE_NO )
+			{
+				//Don't hurt yourself or friendlies!
+				if( pEntity == g_EntityFuncs.Instance( pevInflictor ) || !( g_EntityFuncs.Instance( pevInflictor ).IRelationship( pEntity ) > 0 ) )
+					continue;
+				// UNDONE: this should check a damage mask, not an ignore
+				if ( iClassIgnore != CLASS_NONE && pEntity.Classify() == iClassIgnore )
+				{// houndeyes don't hurt other houndeyes with their attack
+					continue;
+				}
+
+				// blast's don't tavel into or out of water
+				if( bInWater && pEntity.pev.waterlevel == 0 )
+					continue;
+				if( !bInWater && pEntity.pev.waterlevel == 3 )
+					continue;
+
+				vecSpot = pEntity.BodyTarget( vecSrc );
+				
+				g_Utility.TraceLine( vecSrc, vecSpot, dont_ignore_monsters, g_EntityFuncs.Instance( pevInflictor ).edict(), tr );
+
+				if( tr.flFraction == 1.0 || g_EntityFuncs.Instance( tr.pHit ).entindex() == pEntity.entindex() )
+				{// the explosion can 'see' this entity, so hurt them!
+					if( tr.fStartSolid != 0 )
+					{
+						// if we're stuck inside them, fixup the position and distance
+						tr.vecEndPos = vecSrc;
+						tr.flFraction = 0.0;
+					}
+					
+					// decrease damage for an ent that's farther from the bomb.
+					flAdjustedDamage = ( vecSrc - tr.vecEndPos ).Length() * falloff;
+					flAdjustedDamage = flDamage - flAdjustedDamage;
+				
+					if( flAdjustedDamage < 0 )
+						flAdjustedDamage = 0;
+				
+					// ALERT( at_console, "hit %s\n", STRING( pEntity.pev.classname ) );
+					if( tr.flFraction != 1.0 )
+					{
+						g_WeaponFuncs.ClearMultiDamage( );
+						pEntity.TraceAttack( pevInflictor, flAdjustedDamage, ( tr.vecEndPos - vecSrc ).Normalize( ), tr, bitsDamageType );
+						g_WeaponFuncs.ApplyMultiDamage( pevInflictor, pevAttacker );
+					}
+					else
+					{
+						pEntity.TakeDamage ( pevInflictor, pevAttacker, flAdjustedDamage, bitsDamageType );
+					}
+				}
+			}
+		}
+	}	
 }
 }
