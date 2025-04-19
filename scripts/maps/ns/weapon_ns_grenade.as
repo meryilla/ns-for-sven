@@ -62,7 +62,7 @@ const int MAX_CLIP = WEAPON_NOCLIP;
 const int SLOT = 3;
 const int POSITION = 20;
 const int FLAGS = ITEM_FLAG_LIMITINWORLD | ITEM_FLAG_EXHAUSTIBLE;
-const int DEFAULT_AMMO = 1;
+const int DEFAULT_AMMO = 3;
 
 //Stats
 const int DAMAGE = 150;
